@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.innovation.mapper.ProjectMapper">
+
+    <select id="selectProjectPage" resultType="com.innovation.entity.Project">
+        SELECT p.*,
+               u1.real_name AS leaderName,
+               u2.real_name AS teacherName,
+               c.college_name AS collegeName,
+               pc.cat_name AS catName
+        FROM project p
+        LEFT JOIN user u1 ON p.leader_id = u1.user_id
+        LEFT JOIN user u2 ON p.teacher_id = u2.user_id
+        LEFT JOIN college c ON p.college_id = c.college_id
+        LEFT JOIN project_category pc ON p.cat_id = pc.cat_id
+        <where>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="collegeId != null">
+                AND p.college_id = #{collegeId}
+            </if>
+            <if test="applyYear != null">
+                AND p.apply_year = #{applyYear}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                AND p.project_name LIKE CONCAT('%', #{projectName}, '%')
+            </if>
+            <if test="leaderId != null">
+                AND p.leader_id = #{leaderId}
+            </if>
+            <if test="teacherId != null">
+                AND p.teacher_id = #{teacherId}
+            </if>
+        </where>
+        ORDER BY p.apply_time DESC
+    </select>
+
+</mapper>
