@@ -50,12 +50,13 @@ CREATE TABLE IF NOT EXISTS `project` (
   `apply_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '申报时间',
   `total_budget` DECIMAL(10,2) COMMENT '总申请经费',
   `status` ENUM(
-    'draft','wait_teacher_audit','wait_college_review','wait_college_audit',
-    'wait_school_review','wait_school_audit','approved','rejected',
+    'draft','wait_teacher_audit','wait_college_assign','wait_college_review','wait_college_audit',
+    'wait_school_assign','wait_school_review','wait_school_audit','approved','rejected',
     'running','mid_checking','conclude_apply','concluded'
   ) NOT NULL DEFAULT 'draft' COMMENT '项目状态',
   `start_time` DATE COMMENT '项目开始时间',
   `end_time` DATE COMMENT '计划结束时间',
+  `version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
   KEY `idx_leader` (`leader_id`),
   KEY `idx_teacher` (`teacher_id`),
   KEY `idx_college_year` (`college_id`,`apply_year`),
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `expert_assignment` (
   `expert_id` INT NOT NULL COMMENT '专家ID',
   `stage` ENUM('college','school') NOT NULL COMMENT '评审阶段',
   `assign_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `deadline` DATETIME COMMENT '评审截止时间',
   KEY `idx_project` (`project_id`),
   KEY `idx_expert` (`expert_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='专家分配表';
@@ -198,8 +200,27 @@ CREATE TABLE IF NOT EXISTS `attachment` (
   KEY `idx_relation` (`relation_id`,`attach_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='附件元数据表';
 
+-- 消息表
+CREATE TABLE IF NOT EXISTS `message` (
+  `message_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID',
+  `receiver_id` INT NOT NULL COMMENT '接收者用户ID',
+  `sender_id` INT COMMENT '发送者用户ID(系统消息为NULL)',
+  `title` VARCHAR(100) NOT NULL COMMENT '消息标题',
+  `content` TEXT NOT NULL COMMENT '消息内容',
+  `type` ENUM('system','audit','review','milestone','achievement') NOT NULL DEFAULT 'system' COMMENT '消息类型',
+  `relation_id` INT COMMENT '关联业务ID(项目ID等)',
+  `is_read` TINYINT DEFAULT 0 COMMENT '是否已读: 0未读 1已读',
+  `read_time` DATETIME COMMENT '已读时间',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  KEY `idx_receiver` (`receiver_id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_read` (`receiver_id`,`is_read`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心表';
+
 -- ==================== 初始数据 ====================
 -- 使用 INSERT IGNORE 避免重复插入
+-- 完整示例数据见 data.sql
 
 -- 学院数据
 INSERT IGNORE INTO `college` (`college_name`, `sort`) VALUES
@@ -218,6 +239,29 @@ INSERT IGNORE INTO `project_category` (`cat_name`, `remark`) VALUES
 ('创业训练', '面向本科生团队，开展创业模拟与实训'),
 ('创业实践', '面向创业团队，开展真实创业项目实践');
 
--- 管理员账户(密码: admin123)
+-- 管理员账户(密码: admin123) — 完整数据在 data.sql 中
 INSERT IGNORE INTO `user` (`username`, `password`, `real_name`, `role`, `status`) VALUES
 ('admin', '$2a$10$M9huYl/fM0sBarK1v.4WU.JJmbG/6Bixi2vkTUEnasSPeDVg8H0N.', '系统管理员', 'school_admin', 1);
+
+-- ==================== 数据迁移：新增"待分配"状态 ====================
+-- 将已有项目中的 wait_college_review 转为 wait_college_assign（尚未分配专家的项目）
+-- 将已有项目中的 wait_school_review 转为 wait_school_assign（尚未分配专家的项目）
+-- 注意：已分配了专家且专家已开始评审的项目应保留原状态
+-- 以下为全量迁移脚本，适用于无已有评审数据的新部署环境
+
+-- 修改 project 表的 status 枚举，新增 wait_college_assign 和 wait_school_assign
+-- ALTER TABLE `project` MODIFY COLUMN `status` ENUM(
+--   'draft','wait_teacher_audit','wait_college_assign','wait_college_review','wait_college_audit',
+--   'wait_school_assign','wait_school_review','wait_school_audit','approved','rejected',
+--   'running','mid_checking','conclude_apply','concluded'
+-- ) NOT NULL DEFAULT 'draft' COMMENT '项目状态';
+
+-- 对于已有数据库：将处于 wait_college_review 且无专家分配记录的项目转为 wait_college_assign
+-- UPDATE `project` p SET p.status = 'wait_college_assign'
+--   WHERE p.status = 'wait_college_review'
+--   AND NOT EXISTS (SELECT 1 FROM `expert_assignment` ea WHERE ea.project_id = p.project_id AND ea.stage = 'college');
+
+-- 对于已有数据库：将处于 wait_school_review 且无专家分配记录的项目转为 wait_school_assign
+-- UPDATE `project` p SET p.status = 'wait_school_assign'
+--   WHERE p.status = 'wait_school_review'
+--   AND NOT EXISTS (SELECT 1 FROM `expert_assignment` ea WHERE ea.project_id = p.project_id AND ea.stage = 'school');

@@ -9,6 +9,7 @@ import com.innovation.service.ExpertService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "专家管理")
@@ -40,6 +41,7 @@ public class ExpertController {
 
     @ApiOperation("创建专家")
     @PostMapping
+    @PreAuthorize("hasAnyRole('college_admin','school_admin')")
     public Result<Void> createExpert(@RequestBody Expert expert) {
         expertService.save(expert);
         return Result.success();
@@ -47,6 +49,7 @@ public class ExpertController {
 
     @ApiOperation("更新专家")
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('college_admin','school_admin')")
     public Result<Void> updateExpert(@PathVariable Integer id, @RequestBody Expert expert) {
         expert.setExpertId(id);
         expertService.updateById(expert);
@@ -55,6 +58,7 @@ public class ExpertController {
 
     @ApiOperation("删除专家")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('school_admin')")
     public Result<Void> deleteExpert(@PathVariable Integer id) {
         expertService.removeById(id);
         return Result.success();

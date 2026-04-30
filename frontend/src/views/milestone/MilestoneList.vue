@@ -92,7 +92,7 @@ const editingId = ref<number | null>(null)
 const filters = reactive({ projectId: '', status: '' })
 const milestoneForm = reactive({ projectId: '', milestoneName: '', planTime: '', status: 'pending' })
 
-function statusType(s: string) { return { pending: 'info', doing: 'warning', finished: 'success', overdue: 'danger' }[s] || 'info' }
+function statusType(s: string): '' | 'success' | 'warning' | 'danger' | 'info' | 'primary' { return { pending: 'info', doing: 'warning', finished: 'success', overdue: 'danger' }[s] as any || 'info' }
 function statusText(s: string) { return { pending: '待办', doing: '进行中', finished: '已完成', overdue: '已逾期' }[s] || s }
 
 async function loadData() {

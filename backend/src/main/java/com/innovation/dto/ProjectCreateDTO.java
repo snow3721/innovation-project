@@ -19,6 +19,8 @@ public class ProjectCreateDTO {
     @NotNull(message = "所属学院不能为空")
     private Integer collegeId;
 
+    private Integer teacherId;
+
     private BigDecimal totalBudget;
 
     private String startTime;

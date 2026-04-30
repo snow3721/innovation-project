@@ -21,6 +21,8 @@ public class ExpertAssignment {
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime assignTime;
 
+    private LocalDateTime deadline;
+
     @TableField(exist = false)
     private String expertName;
 }

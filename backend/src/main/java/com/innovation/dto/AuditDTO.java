@@ -12,4 +12,6 @@ public class AuditDTO {
 
     @NotNull(message = "审核结果不能为空")
     private String result;
+
+    private String opinion;
 }

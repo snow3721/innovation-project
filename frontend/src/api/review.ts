@@ -15,3 +15,7 @@ export function getAssignments(params: any) {
 export function assignExpert(data: { projectId: number; expertId: number; stage: string }) {
   return request.post('/reviews/assignments', data)
 }
+
+export function getMyReviewTasks() {
+  return request.get('/reviews/my-tasks')
+}

@@ -1,42 +1,60 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { logout as logoutApi } from '@/api/auth'
+
+/**
+ * 解析JWT token获取payload，不依赖localStorage存储敏感信息
+ */
+function parseJwtPayload(token: string): any {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonPayload)
+  } catch {
+    return null
+  }
+}
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const userId = ref(Number(localStorage.getItem('userId')) || 0)
-  const username = ref(localStorage.getItem('username') || '')
+
+  // 从JWT token中解析用户信息，而非localStorage，防止篡改
+  const userInfo = computed(() => {
+    if (!token.value) return null
+    return parseJwtPayload(token.value)
+  })
+
+  const userId = computed(() => userInfo.value?.userId || 0)
+  const username = computed(() => userInfo.value?.sub || '')
+  const role = computed(() => userInfo.value?.role || '')
   const realName = ref(localStorage.getItem('realName') || '')
-  const role = ref(localStorage.getItem('role') || '')
-  const collegeId = ref(Number(localStorage.getItem('collegeId')) || 0)
+  const collegeId = computed(() => userInfo.value?.collegeId || 0)
 
   function setUser(data: { token: string; userId: number; username: string; realName: string; role: string; collegeId: number }) {
     token.value = data.token
-    userId.value = data.userId
-    username.value = data.username
     realName.value = data.realName
-    role.value = data.role
-    collegeId.value = data.collegeId
+    // 仅存储token和realName到localStorage
     localStorage.setItem('token', data.token)
-    localStorage.setItem('userId', String(data.userId))
-    localStorage.setItem('username', data.username)
     localStorage.setItem('realName', data.realName)
-    localStorage.setItem('role', data.role)
-    localStorage.setItem('collegeId', String(data.collegeId))
   }
 
-  function logout() {
+  async function logout() {
+    // 调用后端登出API，将Token加入黑名单
+    try {
+      await logoutApi()
+    } catch {
+      // 即使API调用失败也继续清除本地状态
+    }
     token.value = ''
-    userId.value = 0
-    username.value = ''
     realName.value = ''
-    role.value = ''
-    collegeId.value = 0
     localStorage.removeItem('token')
-    localStorage.removeItem('userId')
-    localStorage.removeItem('username')
     localStorage.removeItem('realName')
-    localStorage.removeItem('role')
-    localStorage.removeItem('collegeId')
   }
 
   return { token, userId, username, realName, role, collegeId, setUser, logout }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -27,11 +28,13 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(Integer userId, String username, String role) {
+    public String generateToken(Integer userId, String username, String role, Integer collegeId) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("userId", userId)
                 .claim("role", role)
+                .claim("collegeId", collegeId)
+                .claim("jti", UUID.randomUUID().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -61,6 +64,22 @@ public class JwtUtil {
         return claims.get("role", String.class);
     }
 
+    /**
+     * 获取 Token 的唯一标识（jti），用于黑名单校验
+     */
+    public String getJti(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("jti", String.class);
+    }
+
+    /**
+     * 获取 Token 过期时间
+     */
+    public Date getExpiration(String token) {
+        Claims claims = parseToken(token);
+        return claims.getExpiration();
+    }
+
     public boolean isTokenExpired(String token) {
         try {
             Claims claims = parseToken(token);
@@ -68,5 +87,9 @@ public class JwtUtil {
         } catch (Exception e) {
             return true;
         }
+    }
+
+    public long getExpiration() {
+        return expiration;
     }
 }

@@ -16,7 +16,7 @@
 <script setup lang="ts">
 defineProps<{
   data: any[]
-  loading?: boolean
+  loading?: boolean | null
 }>()
 
 const emit = defineEmits<{

@@ -80,17 +80,33 @@
             <span style="font-weight: 600">快捷操作</span>
           </template>
           <div class="quick-actions">
-            <router-link to="/projects/create" class="action-item">
+            <router-link v-if="hasRole(['student','teacher'])" to="/projects/create" class="action-item">
               <el-icon :size="24"><Plus /></el-icon>
               <span>创建项目</span>
             </router-link>
-            <router-link to="/achievements/create" class="action-item">
+            <router-link v-if="hasRole(['student','teacher'])" to="/achievements/create" class="action-item">
               <el-icon :size="24"><Medal /></el-icon>
               <span>提交成果</span>
+            </router-link>
+            <router-link v-if="hasRole(['expert','teacher','college_admin','school_admin'])" to="/reviews/my-tasks" class="action-item">
+              <el-icon :size="24"><Edit /></el-icon>
+              <span>评审任务</span>
+            </router-link>
+            <router-link v-if="hasRole(['school_admin','college_admin'])" to="/reviews" class="action-item">
+              <el-icon :size="24"><Edit /></el-icon>
+              <span>评审管理</span>
+            </router-link>
+            <router-link v-if="hasRole(['school_admin','college_admin'])" to="/statistics" class="action-item">
+              <el-icon :size="24"><DataAnalysis /></el-icon>
+              <span>数据统计</span>
             </router-link>
             <router-link to="/milestones" class="action-item">
               <el-icon :size="24"><Flag /></el-icon>
               <span>里程碑</span>
+            </router-link>
+            <router-link to="/messages" class="action-item">
+              <el-icon :size="24"><Bell /></el-icon>
+              <span>消息中心</span>
             </router-link>
             <router-link to="/profile" class="action-item">
               <el-icon :size="24"><Setting /></el-icon>
@@ -121,7 +137,7 @@ import { ref, onMounted, computed } from 'vue'
 import * as echarts from 'echarts'
 import { useUserStore } from '@/stores/user'
 import { getOverview, getByCategory } from '@/api/statistics'
-import { Folder, CircleCheck, Loading, Trophy, Plus, Medal, Flag, Setting } from '@element-plus/icons-vue'
+import { Folder, CircleCheck, Loading, Trophy, Plus, Medal, Flag, Setting, Edit, DataAnalysis, Bell } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const userStore = useUserStore()
@@ -142,6 +158,10 @@ const roleText = computed(() => {
   return map[userStore.role] || ''
 })
 
+function hasRole(roles: string[]) {
+  return roles.includes(userStore.role)
+}
+
 onMounted(async () => {
   try {
     const res1: any = await getOverview()
@@ -154,11 +174,11 @@ onMounted(async () => {
     const chart = echarts.init(chartRef.value)
     chart.setOption({
       tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: ['草稿', '待审核', '评审中', '已立项', '运行中', '已结题', '已驳回'] },
+      xAxis: { type: 'category', data: ['草稿', '待审核', '待分配', '评审中', '已立项', '运行中', '已结题', '已驳回'] },
       yAxis: { type: 'value' },
       series: [{
         type: 'bar',
-        data: [12, 8, 15, 45, 30, 20, 5],
+        data: [12, 8, 6, 15, 45, 30, 20, 5],
         itemStyle: { borderRadius: [6, 6, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#4361ee' }, { offset: 1, color: '#7c3aed' }]) }
       }],
       grid: { left: 40, right: 20, top: 20, bottom: 30 }

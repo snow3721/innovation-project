@@ -51,6 +51,7 @@
           <el-option label="院级" value="college" />
           <el-option label="校级" value="school" />
         </el-select>
+        <el-date-picker v-model="assignForm.deadline" type="datetime" placeholder="评审截止时间" style="width: 200px" value-format="YYYY-MM-DD HH:mm:ss" />
         <el-button type="primary" @click="handleAssign">分配专家</el-button>
       </div>
 
@@ -60,6 +61,12 @@
         <el-table-column prop="expertId" label="专家ID" width="80" />
         <el-table-column prop="stage" label="阶段" width="80">
           <template #default="{ row }">{{ row.stage === 'college' ? '院级' : '校级' }}</template>
+        </el-table-column>
+        <el-table-column prop="deadline" label="截止时间" width="160">
+          <template #default="{ row }">
+            <span v-if="row.deadline">{{ row.deadline }}</span>
+            <el-tag v-else type="info" size="small">未设置</el-tag>
+          </template>
         </el-table-column>
         <el-table-column prop="assignTime" label="分配时间" />
       </el-table>
@@ -80,7 +87,7 @@ const experts = ref<any[]>([])
 const page = ref(1), size = ref(10), total = ref(0)
 
 const filters = reactive({ stage: '', projectId: '' })
-const assignForm = reactive({ projectId: '', expertId: undefined as number | undefined, stage: 'college' })
+const assignForm = reactive({ projectId: '', expertId: undefined as number | undefined, stage: 'college', deadline: '' as string })
 
 async function loadScores() {
   loading.value = true
@@ -103,7 +110,7 @@ async function handleAssign() {
     ElMessage.warning('请填写完整信息')
     return
   }
-  await assignExpert({ projectId: Number(assignForm.projectId), expertId: assignForm.expertId, stage: assignForm.stage })
+  await assignExpert({ projectId: Number(assignForm.projectId), expertId: assignForm.expertId, stage: assignForm.stage, deadline: assignForm.deadline || undefined })
   ElMessage.success('分配成功')
   loadAssignments()
 }

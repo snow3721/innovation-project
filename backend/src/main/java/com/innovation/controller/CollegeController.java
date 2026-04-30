@@ -6,6 +6,7 @@ import com.innovation.service.CollegeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class CollegeController {
 
     @ApiOperation("创建学院")
     @PostMapping
+    @PreAuthorize("hasRole('school_admin')")
     public Result<Void> createCollege(@RequestBody College college) {
         collegeService.save(college);
         return Result.success();
@@ -33,6 +35,7 @@ public class CollegeController {
 
     @ApiOperation("更新学院")
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('school_admin')")
     public Result<Void> updateCollege(@PathVariable Integer id, @RequestBody College college) {
         college.setCollegeId(id);
         collegeService.updateById(college);
@@ -41,6 +44,7 @@ public class CollegeController {
 
     @ApiOperation("删除学院")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('school_admin')")
     public Result<Void> deleteCollege(@PathVariable Integer id) {
         collegeService.removeById(id);
         return Result.success();

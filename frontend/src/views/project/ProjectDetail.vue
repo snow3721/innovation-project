@@ -34,8 +34,10 @@
             <el-steps :active="getStepIndex()" direction="vertical" :space="40" finish-status="success">
               <el-step title="草稿" />
               <el-step title="导师审核" />
+              <el-step title="院级分配" />
               <el-step title="院级评审" />
               <el-step title="院级终审" />
+              <el-step title="校级分配" />
               <el-step title="校级评审" />
               <el-step title="校级终审" />
               <el-step title="已立项" />
@@ -52,6 +54,14 @@
               <el-button v-if="project.status === 'wait_college_audit' && (userStore.role === 'college_admin')" type="danger" @click="handleCollegeAudit('reject')">院级驳回</el-button>
               <el-button v-if="project.status === 'wait_school_audit' && userStore.role === 'school_admin'" type="success" @click="handleSchoolAudit('pass')">校级通过</el-button>
               <el-button v-if="project.status === 'wait_school_audit' && userStore.role === 'school_admin'" type="danger" @click="handleSchoolAudit('reject')">校级驳回</el-button>
+              <el-button v-if="userStore.role !== 'student'" type="primary" @click="goToReviewScore">
+                <el-icon><Edit /></el-icon>
+                进入评审
+              </el-button>
+              <el-button v-if="userStore.role !== 'student'" @click="$router.push('/reviews/my-tasks')">
+                <el-icon><List /></el-icon>
+                我的评审任务
+              </el-button>
             </div>
           </el-card>
         </el-col>
@@ -62,18 +72,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getProject, submitProject, teacherAudit, collegeAudit, schoolAudit } from '@/api/project'
 import { useUserStore } from '@/stores/user'
+import { Edit, List } from '@element-plus/icons-vue'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const project = ref<any>(null)
 
 const statusMap: Record<string, string> = {
-  draft: '草稿', wait_teacher_audit: '待导师审核', wait_college_review: '待院级评审',
-  wait_college_audit: '待院级终审', wait_school_review: '待校级评审', wait_school_audit: '待校级终审',
+  draft: '草稿', wait_teacher_audit: '待导师审核', wait_college_assign: '待院级分配',
+  wait_college_review: '待院级评审', wait_college_audit: '待院级终审',
+  wait_school_assign: '待校级分配', wait_school_review: '待校级评审', wait_school_audit: '待校级终审',
   approved: '已立项', rejected: '已驳回', running: '运行中', mid_checking: '中期检查',
   conclude_apply: '待结题', concluded: '已结题'
 }
@@ -81,8 +94,12 @@ const statusMap: Record<string, string> = {
 function getStatusText(s: string) { return statusMap[s] || s }
 function getStepIndex() {
   const s = project.value?.status
-  const map: Record<string, number> = { draft: 0, wait_teacher_audit: 1, wait_college_review: 2, wait_college_audit: 3, wait_school_review: 4, wait_school_audit: 5, approved: 6 }
-  return map[s] ?? (s === 'rejected' ? 0 : 7)
+  const map: Record<string, number> = {
+    draft: 0, wait_teacher_audit: 1, wait_college_assign: 2, wait_college_review: 3,
+    wait_college_audit: 4, wait_school_assign: 5, wait_school_review: 6,
+    wait_school_audit: 7, approved: 8
+  }
+  return map[s] ?? (s === 'rejected' ? 0 : 9)
 }
 
 async function loadData() {
@@ -115,6 +132,10 @@ async function handleSchoolAudit(result: string) {
   await schoolAudit({ projectId: project.value.projectId, result })
   ElMessage.success(result === 'pass' ? '校级审核通过' : '已驳回')
   loadData()
+}
+
+function goToReviewScore() {
+  router.push(`/reviews/score/${project.value.projectId}`)
 }
 
 onMounted(loadData)

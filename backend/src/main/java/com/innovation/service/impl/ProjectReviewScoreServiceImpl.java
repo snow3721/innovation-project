@@ -6,13 +6,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.innovation.dto.ReviewScoreDTO;
 import com.innovation.entity.Expert;
+import com.innovation.entity.ExpertAssignment;
 import com.innovation.entity.Project;
 import com.innovation.entity.ProjectReviewScore;
 import com.innovation.mapper.ProjectReviewScoreMapper;
+import com.innovation.service.ExpertAssignmentService;
 import com.innovation.service.ExpertService;
 import com.innovation.service.ProjectReviewScoreService;
 import com.innovation.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -26,11 +29,22 @@ public class ProjectReviewScoreServiceImpl extends ServiceImpl<ProjectReviewScor
     @Autowired
     private ProjectService projectService;
 
+    @Lazy
+    @Autowired
+    private ExpertAssignmentService expertAssignmentService;
+
     @Override
     public ProjectReviewScore submitScore(ReviewScoreDTO dto, Integer expertUserId) {
-        Expert expert = expertService.getOne(new LambdaQueryWrapper<Expert>().eq(Expert::getUserId, expertUserId));
-        if (expert == null) {
-            throw new RuntimeException("专家信息不存在");
+        // 获取或自动创建Expert记录，支持非expert角色进行评审
+        Expert expert = expertService.getOrCreateByUserId(expertUserId, null);
+
+        // 检查是否已打分，防止重复打分
+        long existCount = count(new LambdaQueryWrapper<ProjectReviewScore>()
+                .eq(ProjectReviewScore::getProjectId, dto.getProjectId())
+                .eq(ProjectReviewScore::getExpertId, expert.getExpertId())
+                .eq(ProjectReviewScore::getReviewStage, dto.getStage()));
+        if (existCount > 0) {
+            throw new RuntimeException("您已对该项目进行过评审打分，不可重复提交");
         }
 
         ProjectReviewScore score = new ProjectReviewScore();
@@ -62,17 +76,23 @@ public class ProjectReviewScoreServiceImpl extends ServiceImpl<ProjectReviewScor
     }
 
     private void checkAndAdvanceStage(Integer projectId, String stage) {
-        LambdaQueryWrapper<ProjectReviewScore> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ProjectReviewScore::getProjectId, projectId);
-        wrapper.eq(ProjectReviewScore::getReviewStage, stage);
-        long scoredCount = count(wrapper);
+        // 查询该阶段已分配的专家总数
+        long assignedCount = expertAssignmentService.count(new LambdaQueryWrapper<ExpertAssignment>()
+                .eq(ExpertAssignment::getProjectId, projectId)
+                .eq(ExpertAssignment::getStage, stage));
 
-        // Simplified: advance if at least one expert scored
-        // In production, check against total assigned experts
-        if (stage.equals("college")) {
-            projectService.updateProjectStatus(projectId, "wait_college_audit", null);
-        } else if (stage.equals("school")) {
-            projectService.updateProjectStatus(projectId, "wait_school_audit", null);
+        // 查询该阶段已打分的专家数
+        long scoredCount = count(new LambdaQueryWrapper<ProjectReviewScore>()
+                .eq(ProjectReviewScore::getProjectId, projectId)
+                .eq(ProjectReviewScore::getReviewStage, stage));
+
+        // 所有分配的专家都打分完毕后，才推进到下一阶段
+        if (assignedCount > 0 && scoredCount >= assignedCount) {
+            if (stage.equals("college")) {
+                projectService.updateProjectStatus(projectId, "wait_college_audit", null);
+            } else if (stage.equals("school")) {
+                projectService.updateProjectStatus(projectId, "wait_school_audit", null);
+            }
         }
     }
 }

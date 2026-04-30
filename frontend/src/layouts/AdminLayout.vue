@@ -36,9 +36,9 @@
           <el-menu-item index="/projects/create">创建项目</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item v-if="hasRole(['expert'])" index="/reviews">
+        <el-menu-item v-if="hasRole(['expert','teacher','college_admin','school_admin'])" index="/reviews/my-tasks">
           <el-icon><Edit /></el-icon>
-          <template #title>评审管理</template>
+          <template #title>我的评审任务</template>
         </el-menu-item>
 
         <el-menu-item v-if="hasRole(['school_admin','college_admin'])" index="/reviews">
@@ -59,6 +59,14 @@
           <el-menu-item index="/achievements">成果列表</el-menu-item>
           <el-menu-item index="/achievements/create">提交成果</el-menu-item>
         </el-sub-menu>
+
+        <el-menu-item index="/messages">
+          <el-icon><Bell /></el-icon>
+          <template #title>
+            消息中心
+            <el-badge v-if="unreadCount > 0" :value="unreadCount" :max="99" style="margin-left: 6px" />
+          </template>
+        </el-menu-item>
 
         <el-menu-item v-if="hasRole(['school_admin','college_admin'])" index="/users">
           <el-icon><User /></el-icon>
@@ -96,6 +104,9 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="msg-badge">
+            <el-button :icon="Bell" circle size="small" @click="$router.push('/messages')" />
+          </el-badge>
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" class="user-avatar">{{ userStore.realName?.charAt(0) }}</el-avatar>
@@ -120,18 +131,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getUnreadCount } from '@/api/message'
 import {
   Odometer, Folder, Edit, Flag, Trophy, User, Avatar,
-  School, Menu, DataAnalysis
+  School, Menu, DataAnalysis, Bell
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const isCollapse = ref(false)
+const unreadCount = ref(0)
+let timer: any = null
+
+async function fetchUnreadCount() {
+  try {
+    const res: any = await getUnreadCount()
+    unreadCount.value = res.data || 0
+  } catch {}
+}
+
+onMounted(() => {
+  fetchUnreadCount()
+  timer = setInterval(fetchUnreadCount, 30000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => (route.meta.title as string) || '')
@@ -231,6 +261,13 @@ function handleCommand(cmd: string) {
   .header-right {
     display: flex;
     align-items: center;
+    gap: 12px;
+  }
+
+  .msg-badge {
+    :deep(.el-badge__content) {
+      top: -2px;
+    }
   }
 
   .user-info {

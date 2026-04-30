@@ -37,6 +37,9 @@ public class Project {
 
     private LocalDate endTime;
 
+    @Version
+    private Integer version;
+
     @TableField(exist = false)
     private String leaderName;
 

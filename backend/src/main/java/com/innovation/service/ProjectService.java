@@ -17,4 +17,10 @@ public interface ProjectService extends IService<Project> {
     void submitProject(Integer projectId, Integer userId);
 
     void updateProjectStatus(Integer projectId, String targetStatus, Integer operatorId);
+
+    void teacherAudit(Integer projectId, String result, Integer teacherId, String opinion);
+
+    void collegeAudit(Integer projectId, String result, Integer adminId, String opinion);
+
+    void schoolAudit(Integer projectId, String result, Integer adminId, String opinion);
 }

@@ -94,7 +94,7 @@ const typeMap: Record<string, string> = { patent: '专利', paper: '论文', sof
 const statusMap: Record<string, string> = { applying: '申请中', approved: '已批准', published: '已发表', landed: '已落地' }
 const typeFilters = Object.entries(typeMap).map(([k, v]) => ({ text: v, value: k }))
 function filterType(value: string, row: any) { return row.type === value }
-function statusType(s: string) { return { applying: 'warning', approved: 'success', published: 'primary', landed: 'success' }[s] || 'info' }
+function statusType(s: string): '' | 'success' | 'warning' | 'danger' | 'info' | 'primary' { return { applying: 'warning', approved: 'success', published: 'primary', landed: 'success' }[s] as any || 'info' }
 
 async function loadData() {
   loading.value = true

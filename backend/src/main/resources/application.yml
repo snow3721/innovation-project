@@ -7,9 +7,30 @@ spring:
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      pool-name: InnovationHikariCP
   data:
     mongodb:
       uri: mongodb://192.168.100.128:27017/innovation_project
+  rabbitmq:
+    host: 192.168.100.128
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 10
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
   servlet:
     multipart:
       max-file-size: 100MB
@@ -26,9 +47,6 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
 
 minio:
   endpoint: http://192.168.100.128:9000

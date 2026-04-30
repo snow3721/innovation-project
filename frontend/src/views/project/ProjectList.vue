@@ -90,8 +90,10 @@ const filters = reactive({
 const statusOptions = [
   { value: 'draft', label: '草稿' },
   { value: 'wait_teacher_audit', label: '待导师审核' },
+  { value: 'wait_college_assign', label: '待院级分配' },
   { value: 'wait_college_review', label: '待院级评审' },
   { value: 'wait_college_audit', label: '待院级终审' },
+  { value: 'wait_school_assign', label: '待校级分配' },
   { value: 'wait_school_review', label: '待校级评审' },
   { value: 'wait_school_audit', label: '待校级终审' },
   { value: 'approved', label: '已立项' },
