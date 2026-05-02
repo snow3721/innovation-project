@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # ========== 后端服务 ==========
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: innovation-backend
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://192.168.100.128:3307/innovation_project?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATA_MONGODB_URI=mongodb://192.168.100.128:27017/innovation_project
+      - SPRING_RABBITMQ_HOST=192.168.100.128
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - MINIO_ENDPOINT=http://192.168.100.128:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    networks:
+      - innovation-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/v1/auth/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ========== 前端服务 ==========
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: innovation-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - innovation-net
+
+networks:
+  innovation-net:
+    driver: bridge

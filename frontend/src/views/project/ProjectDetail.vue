@@ -5,7 +5,13 @@
       <el-button @click="$router.back()">返回</el-button>
     </div>
 
-    <div v-if="project" class="detail-content">
+    <div v-if="forbidden" class="forbidden-tip">
+      <el-empty description="无权查看该项目">
+        <el-button type="primary" @click="$router.back()">返回</el-button>
+      </el-empty>
+    </div>
+
+    <div v-else-if="project" class="detail-content">
       <el-row :gutter="16">
         <el-col :span="16">
           <el-card shadow="never">
@@ -47,17 +53,7 @@
           <el-card shadow="never">
             <template #header><span style="font-weight:600">操作</span></template>
             <div style="display:flex;flex-direction:column;gap:8px">
-              <el-button v-if="project.status === 'draft'" type="primary" @click="handleSubmit">提交审核</el-button>
-              <el-button v-if="project.status === 'wait_teacher_audit' && userStore.role === 'teacher'" type="success" @click="handleAudit('pass')">导师通过</el-button>
-              <el-button v-if="project.status === 'wait_teacher_audit' && userStore.role === 'teacher'" type="danger" @click="handleAudit('reject')">导师驳回</el-button>
-              <el-button v-if="project.status === 'wait_college_audit' && (userStore.role === 'college_admin')" type="success" @click="handleCollegeAudit('pass')">院级通过</el-button>
-              <el-button v-if="project.status === 'wait_college_audit' && (userStore.role === 'college_admin')" type="danger" @click="handleCollegeAudit('reject')">院级驳回</el-button>
-              <el-button v-if="project.status === 'wait_school_audit' && userStore.role === 'school_admin'" type="success" @click="handleSchoolAudit('pass')">校级通过</el-button>
-              <el-button v-if="project.status === 'wait_school_audit' && userStore.role === 'school_admin'" type="danger" @click="handleSchoolAudit('reject')">校级驳回</el-button>
-              <el-button v-if="userStore.role !== 'student'" type="primary" @click="goToReviewScore">
-                <el-icon><Edit /></el-icon>
-                进入评审
-              </el-button>
+              <el-button v-if="(project.status === 'draft' || project.status === 'rejected') && isOwner" type="primary" @click="handleSubmit">提交审核</el-button>
               <el-button v-if="userStore.role !== 'student'" @click="$router.push('/reviews/my-tasks')">
                 <el-icon><List /></el-icon>
                 我的评审任务
@@ -71,17 +67,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getProject, submitProject, teacherAudit, collegeAudit, schoolAudit } from '@/api/project'
+import { getProject, submitProject } from '@/api/project'
 import { useUserStore } from '@/stores/user'
-import { Edit, List } from '@element-plus/icons-vue'
+import { List } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const project = ref<any>(null)
+const forbidden = ref(false)
+const isOwner = computed(() => project.value?.leaderId === userStore.userId)
 
 const statusMap: Record<string, string> = {
   draft: '草稿', wait_teacher_audit: '待导师审核', wait_college_assign: '待院级分配',
@@ -107,7 +105,10 @@ async function loadData() {
   try {
     const res: any = await getProject(id)
     project.value = res.data
-  } catch {}
+  } catch {
+    // 拦截器已显示权限不足提示，标记为无权访问
+    forbidden.value = true
+  }
 }
 
 async function handleSubmit() {
@@ -116,27 +117,9 @@ async function handleSubmit() {
   loadData()
 }
 
-async function handleAudit(result: string) {
-  await teacherAudit({ projectId: project.value.projectId, result })
-  ElMessage.success(result === 'pass' ? '审核通过' : '已驳回')
-  loadData()
-}
-
-async function handleCollegeAudit(result: string) {
-  await collegeAudit({ projectId: project.value.projectId, result })
-  ElMessage.success(result === 'pass' ? '院级审核通过' : '已驳回')
-  loadData()
-}
-
-async function handleSchoolAudit(result: string) {
-  await schoolAudit({ projectId: project.value.projectId, result })
-  ElMessage.success(result === 'pass' ? '校级审核通过' : '已驳回')
-  loadData()
-}
-
-function goToReviewScore() {
-  router.push(`/reviews/score/${project.value.projectId}`)
-}
-
 onMounted(loadData)
 </script>
+
+<style lang="scss" scoped>
+.forbidden-tip { padding: 80px 0; text-align: center; }
+</style>

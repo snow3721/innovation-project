@@ -25,7 +25,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="所属学院" prop="collegeId">
-              <el-select v-model="form.collegeId" placeholder="请选择学院" style="width: 100%">
+              <el-select v-model="form.collegeId" placeholder="请选择学院" style="width: 100%" @change="onCollegeChange">
                 <el-option v-for="c in colleges" :key="c.collegeId" :label="c.collegeName" :value="c.collegeId" />
               </el-select>
             </el-form-item>
@@ -38,10 +38,30 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
+            <el-form-item label="指导老师" prop="teacherId">
+              <el-select
+                v-model="form.teacherId"
+                placeholder="请选择指导老师"
+                filterable
+                style="width: 100%"
+                :loading="teachersLoading"
+              >
+                <el-option
+                  v-for="t in teachers"
+                  :key="t.userId"
+                  :label="t.realName + (t.major ? '（' + t.major + '）' : '')"
+                  :value="t.userId"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="开始时间">
               <el-date-picker v-model="form.startTime" type="date" value-format="YYYY-MM-DD" placeholder="选择开始时间" style="width: 100%" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="结束时间">
               <el-date-picker v-model="form.endTime" type="date" value-format="YYYY-MM-DD" placeholder="选择结束时间" style="width: 100%" />
@@ -98,6 +118,7 @@ import type { FormInstance } from 'element-plus'
 import { createProject, submitProject } from '@/api/project'
 import { getColleges } from '@/api/college'
 import { getCategories } from '@/api/category'
+import { getTeachers } from '@/api/user'
 import FileUpload from '@/components/FileUpload.vue'
 
 const router = useRouter()
@@ -105,11 +126,14 @@ const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const colleges = ref<any[]>([])
 const categories = ref<any[]>([])
+const teachers = ref<any[]>([])
+const teachersLoading = ref(false)
 
 const form = reactive({
   projectName: '',
   catId: undefined as number | undefined,
   collegeId: undefined as number | undefined,
+  teacherId: undefined as number | undefined,
   totalBudget: 0,
   startTime: '',
   endTime: '',
@@ -122,7 +146,25 @@ const form = reactive({
 const rules = {
   projectName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   catId: [{ required: true, message: '请选择类别', trigger: 'change' }],
-  collegeId: [{ required: true, message: '请选择学院', trigger: 'change' }]
+  collegeId: [{ required: true, message: '请选择学院', trigger: 'change' }],
+  teacherId: [{ required: true, message: '请选择指导老师', trigger: 'change' }]
+}
+
+async function loadTeachers(collegeId?: number) {
+  teachersLoading.value = true
+  try {
+    const res: any = await getTeachers({ collegeId })
+    teachers.value = res.data || []
+  } catch {
+    teachers.value = []
+  } finally {
+    teachersLoading.value = false
+  }
+}
+
+function onCollegeChange(collegeId: number) {
+  form.teacherId = undefined
+  loadTeachers(collegeId)
 }
 
 onMounted(async () => {

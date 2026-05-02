@@ -33,4 +33,7 @@ public class ProjectReviewScore {
 
     @TableField(exist = false)
     private String expertName;
+
+    @TableField(exist = false)
+    private String projectName;
 }

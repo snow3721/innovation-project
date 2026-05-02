@@ -218,7 +218,8 @@ CREATE TABLE IF NOT EXISTS `message` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心表';
 
--- ==================== 初始数据 ====================
+-- ============
+======== 初始数据 ====================
 -- 使用 INSERT IGNORE 避免重复插入
 -- 完整示例数据见 data.sql
 

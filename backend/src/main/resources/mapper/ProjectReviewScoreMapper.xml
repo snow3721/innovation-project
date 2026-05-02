@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.innovation.mapper.ProjectReviewScoreMapper">
+
+    <select id="selectScorePageWithDetail" resultType="com.innovation.entity.ProjectReviewScore">
+        SELECT s.*,
+               e.real_name AS expertName,
+               p.project_name AS projectName
+        FROM project_review_score s
+        LEFT JOIN expert e ON s.expert_id = e.expert_id
+        LEFT JOIN project p ON s.project_id = p.project_id
+        <where>
+            <if test="projectId != null">
+                AND s.project_id = #{projectId}
+            </if>
+            <if test="stage != null and stage != ''">
+                AND s.review_stage = #{stage}
+            </if>
+        </where>
+        ORDER BY s.score_time DESC
+    </select>
+
+</mapper>

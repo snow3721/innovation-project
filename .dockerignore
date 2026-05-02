@@ -1,0 +1,8 @@
+.git/
+.idea/
+**/node_modules/
+**/target/
+**/*.log
+**/dist/
+backend/backend.log
+frontend/frontend.log

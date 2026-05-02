@@ -35,8 +35,17 @@ public class ProjectReviewScoreServiceImpl extends ServiceImpl<ProjectReviewScor
 
     @Override
     public ProjectReviewScore submitScore(ReviewScoreDTO dto, Integer expertUserId) {
-        // 获取或自动创建Expert记录，支持非expert角色进行评审
+        // 获取或自动创建Expert记录，支持所有非学生角色进行评审
         Expert expert = expertService.getOrCreateByUserId(expertUserId, null);
+
+        // 校验：该专家必须被分配了该项目的该阶段评审任务
+        long assignedCount = expertAssignmentService.count(new LambdaQueryWrapper<ExpertAssignment>()
+                .eq(ExpertAssignment::getProjectId, dto.getProjectId())
+                .eq(ExpertAssignment::getExpertId, expert.getExpertId())
+                .eq(ExpertAssignment::getStage, dto.getStage()));
+        if (assignedCount == 0) {
+            throw new RuntimeException("您未被分配该项目的评审任务，无权打分");
+        }
 
         // 检查是否已打分，防止重复打分
         long existCount = count(new LambdaQueryWrapper<ProjectReviewScore>()
@@ -64,15 +73,7 @@ public class ProjectReviewScoreServiceImpl extends ServiceImpl<ProjectReviewScor
 
     @Override
     public IPage<ProjectReviewScore> listScores(int page, int size, Integer projectId, String stage) {
-        LambdaQueryWrapper<ProjectReviewScore> wrapper = new LambdaQueryWrapper<>();
-        if (projectId != null) {
-            wrapper.eq(ProjectReviewScore::getProjectId, projectId);
-        }
-        if (StringUtils.hasText(stage)) {
-            wrapper.eq(ProjectReviewScore::getReviewStage, stage);
-        }
-        wrapper.orderByDesc(ProjectReviewScore::getScoreTime);
-        return page(new Page<>(page, size), wrapper);
+        return baseMapper.selectScorePageWithDetail(new Page<>(page, size), projectId, stage);
     }
 
     private void checkAndAdvanceStage(Integer projectId, String stage) {

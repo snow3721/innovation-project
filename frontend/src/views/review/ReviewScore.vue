@@ -34,18 +34,17 @@
       </el-col>
 
       <el-col :span="14">
-        <div class="card">
+        <div v-if="!taskInfo" style="text-align:center;padding:40px">
+          <el-empty description="未找到评审任务，请从评审任务列表进入" />
+        </div>
+        <div v-else class="card">
+          <el-alert
+            :title="'评审阶段：' + (taskInfo.stage === 'college' ? '院级评审' : '校级评审')"
+            type="info"
+            :closable="false"
+            style="margin-bottom: 20px"
+          />
           <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" size="large">
-            <el-form-item label="项目ID">
-              <el-input :model-value="projectId" disabled />
-            </el-form-item>
-            <el-form-item label="评审阶段" prop="stage">
-              <el-radio-group v-model="form.stage">
-                <el-radio value="college">院级评审</el-radio>
-                <el-radio value="school">校级评审</el-radio>
-              </el-radio-group>
-            </el-form-item>
-
             <el-divider>打分项（每项0-25分）</el-divider>
             <el-row :gutter="20">
               <el-col :span="12">
@@ -98,21 +97,24 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { submitScore } from '@/api/review'
 import { getProject } from '@/api/project'
-import { useUserStore } from '@/stores/user'
+import { getMyReviewTasks } from '@/api/review'
 import { Loading } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useUserStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const projectLoading = ref(false)
 const project = ref<any>(null)
+const taskInfo = ref<{ stage: string; assignmentId: number } | null>(null)
+
 const projectId = Number(route.params.id)
+const assignmentId = Number(route.query.assignmentId) || null
 
 const statusMap: Record<string, string> = {
-  draft: '草稿', wait_teacher_audit: '待导师审核', wait_college_review: '待院级评审',
-  wait_college_audit: '待院级终审', wait_school_review: '待校级评审', wait_school_audit: '待校级终审',
+  draft: '草稿', wait_teacher_audit: '待导师审核', wait_college_assign: '待院级分配',
+  wait_college_review: '待院级评审', wait_college_audit: '待院级终审',
+  wait_school_assign: '待校级分配', wait_school_review: '待校级评审', wait_school_audit: '待校级终审',
   approved: '已立项', rejected: '已驳回', running: '运行中', mid_checking: '中期检查',
   conclude_apply: '待结题', concluded: '已结题'
 }
@@ -120,25 +122,34 @@ const statusMap: Record<string, string> = {
 function getStatusText(s: string) { return statusMap[s] || s }
 function getStatusType(s: string) {
   const map: Record<string, string> = {
-    draft: 'info', wait_teacher_audit: 'warning', wait_college_review: 'warning',
-    wait_college_audit: 'warning', wait_school_review: 'warning', wait_school_audit: 'warning',
+    draft: 'info', wait_teacher_audit: 'warning', wait_college_assign: 'warning',
+    wait_college_review: 'warning', wait_college_audit: 'warning',
+    wait_school_assign: 'warning', wait_school_review: 'warning', wait_school_audit: 'warning',
     approved: 'success', rejected: 'danger', running: 'success', concluded: 'success'
   }
   return map[s] || 'info'
 }
 
-async function loadProject() {
+async function loadTaskAndProject() {
   projectLoading.value = true
   try {
-    const res: any = await getProject(projectId)
-    project.value = res.data
+    // 加载项目信息
+    const projRes: any = await getProject(projectId)
+    project.value = projRes.data
+
+    // 从"我的评审任务"中查找该项目的任务，获取 stage
+    const tasksRes: any = await getMyReviewTasks()
+    const tasks = tasksRes.data || []
+    const task = tasks.find((t: any) => t.projectId === projectId && t.type === 'review')
+    if (task && !task.scored) {
+      taskInfo.value = { stage: task.stage, assignmentId: task.assignmentId }
+    }
   } catch {} finally {
     projectLoading.value = false
   }
 }
 
 const form = reactive({
-  stage: 'college',
   scoreInnovation: 0,
   scoreFeasibility: 0,
   scoreTeam: 0,
@@ -146,19 +157,18 @@ const form = reactive({
   opinion: ''
 })
 
-const rules = {
-  stage: [{ required: true, message: '请选择评审阶段', trigger: 'change' }]
-}
+const rules = {}
 
 async function handleSubmit() {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
-
+  if (!taskInfo.value) {
+    ElMessage.error('未找到评审任务')
+    return
+  }
   submitting.value = true
   try {
     await submitScore({
       projectId,
-      stage: form.stage,
+      stage: taskInfo.value.stage,
       scoreInnovation: form.scoreInnovation,
       scoreFeasibility: form.scoreFeasibility,
       scoreTeam: form.scoreTeam,
@@ -167,11 +177,11 @@ async function handleSubmit() {
       opinion: form.opinion
     })
     ElMessage.success('评分提交成功')
-    router.push(userStore.role !== 'student' ? '/reviews/my-tasks' : '/reviews')
+    router.push('/reviews/my-tasks')
   } catch {} finally { submitting.value = false }
 }
 
-onMounted(loadProject)
+onMounted(loadTaskAndProject)
 </script>
 
 <style lang="scss" scoped>

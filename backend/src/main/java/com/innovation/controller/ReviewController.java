@@ -1,6 +1,8 @@
 package com.innovation.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.innovation.common.PageResult;
 import com.innovation.common.Result;
 import com.innovation.dto.MyReviewTaskDTO;
@@ -24,7 +26,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "评审管理")
 @RestController
@@ -53,7 +57,6 @@ public class ReviewController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Integer userId = (Integer) auth.getPrincipal();
         ProjectReviewScore score = reviewScoreService.submitScore(dto, userId);
-        // 通知项目负责人有新的评审结果
         Project project = projectService.getById(dto.getProjectId());
         if (project != null) {
             MessageSendDTO msg = new MessageSendDTO();
@@ -83,7 +86,6 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('college_admin','school_admin')")
     public Result<Void> assignExpert(@RequestBody ExpertAssignment assignment) {
         expertAssignmentService.assignExpert(assignment.getProjectId(), assignment.getExpertId(), assignment.getStage(), assignment.getDeadline());
-        // 通知专家有新的评审任务 - 通过expertId查找对应的userId
         Expert expert = expertService.getById(assignment.getExpertId());
         if (expert != null && expert.getUserId() != null) {
             MessageSendDTO msg = new MessageSendDTO();
@@ -113,7 +115,81 @@ public class ReviewController {
     public Result<List<MyReviewTaskDTO>> listMyReviewTasks() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Integer userId = (Integer) auth.getPrincipal();
-        List<MyReviewTaskDTO> tasks = expertAssignmentService.listMyReviewTasks(userId);
+        String role = auth.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .filter(a -> a.startsWith("ROLE_"))
+                .map(a -> a.substring(5))
+                .findFirst()
+                .orElse("");
+        List<MyReviewTaskDTO> tasks = expertAssignmentService.listMyReviewTasks(userId, role);
         return Result.success(tasks);
+    }
+
+    @ApiOperation("获取待分配项目列表")
+    @GetMapping("/pending-projects")
+    @PreAuthorize("hasAnyRole('college_admin','school_admin')")
+    public Result<PageResult<Project>> listPendingProjects(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String stage,
+            @RequestParam(required = false) Integer collegeId,
+            @RequestParam(required = false) String projectName) {
+        // 根据管理员角色和stage参数确定查询哪些状态
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        if ("college".equals(stage)) {
+            wrapper.eq(Project::getStatus, "wait_college_assign");
+        } else if ("school".equals(stage)) {
+            wrapper.eq(Project::getStatus, "wait_school_assign");
+        } else {
+            wrapper.in(Project::getStatus, "wait_college_assign", "wait_school_assign");
+        }
+        if (collegeId != null) {
+            wrapper.eq(Project::getCollegeId, collegeId);
+        }
+        if (projectName != null && !projectName.isEmpty()) {
+            wrapper.like(Project::getProjectName, projectName);
+        }
+        wrapper.orderByAsc(Project::getApplyTime);
+        IPage<Project> projectPage = projectService.page(new Page<>(page, size), wrapper);
+        // 填充关联名称
+        projectPage.getRecords().forEach(p -> {
+            Project detail = projectService.getProjectDetail(p.getProjectId());
+            if (detail != null) {
+                p.setLeaderName(detail.getLeaderName());
+                p.setTeacherName(detail.getTeacherName());
+                p.setCollegeName(detail.getCollegeName());
+                p.setCatName(detail.getCatName());
+                p.setStatusText(detail.getStatusText());
+            }
+        });
+        return Result.success(new PageResult<>(projectPage.getTotal(), projectPage.getRecords()));
+    }
+
+    @ApiOperation("评审概览统计")
+    @GetMapping("/overview")
+    @PreAuthorize("hasAnyRole('college_admin','school_admin')")
+    public Result<Map<String, Object>> getOverview() {
+        Map<String, Object> overview = new HashMap<>();
+
+        overview.put("collegeAssignCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_college_assign")));
+        overview.put("collegeReviewCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_college_review")));
+        overview.put("collegeAuditCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_college_audit")));
+        overview.put("schoolAssignCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_school_assign")));
+        overview.put("schoolReviewCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_school_review")));
+        overview.put("schoolAuditCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "wait_school_audit")));
+        overview.put("approvedCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "approved")));
+        overview.put("rejectedCount", projectService.count(new LambdaQueryWrapper<Project>()
+                .eq(Project::getStatus, "rejected")));
+        overview.put("totalAssignments", expertAssignmentService.count());
+        overview.put("totalScores", reviewScoreService.count());
+
+        return Result.success(overview);
     }
 }

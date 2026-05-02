@@ -13,5 +13,5 @@ public interface ExpertAssignmentService extends IService<ExpertAssignment> {
 
     void assignExpert(Integer projectId, Integer expertId, String stage, java.time.LocalDateTime deadline);
 
-    List<MyReviewTaskDTO> listMyReviewTasks(Integer expertUserId);
+    List<MyReviewTaskDTO> listMyReviewTasks(Integer expertUserId, String role);
 }

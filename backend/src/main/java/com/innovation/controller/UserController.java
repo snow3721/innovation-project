@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Api(tags = "用户管理")
@@ -34,6 +35,14 @@ public class UserController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @ApiOperation("获取导师列表（所有已登录用户可访问）")
+    @GetMapping("/teachers")
+    public Result<List<User>> listTeachers(
+            @RequestParam(required = false) Integer collegeId,
+            @RequestParam(required = false) String realName) {
+        return Result.success(userService.listTeachers(collegeId, realName));
+    }
 
     @ApiOperation("获取当前用户信息")
     @GetMapping("/me")

@@ -16,5 +16,6 @@ public interface ProjectMapper extends BaseMapper<Project> {
                                       @Param("applyYear") Integer applyYear,
                                       @Param("projectName") String projectName,
                                       @Param("leaderId") Integer leaderId,
-                                      @Param("teacherId") Integer teacherId);
+                                      @Param("teacherId") Integer teacherId,
+                                      @Param("memberUserId") Integer memberUserId);
 }

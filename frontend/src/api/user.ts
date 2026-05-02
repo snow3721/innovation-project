@@ -24,6 +24,10 @@ export function getCurrentUser() {
   return request.get('/users/me')
 }
 
+export function getTeachers(params?: { collegeId?: number; realName?: string }) {
+  return request.get('/users/teachers', { params })
+}
+
 export function changePassword(data: { oldPassword: string; newPassword: string }) {
   return request.put('/users/change-password', data)
 }

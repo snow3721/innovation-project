@@ -104,8 +104,9 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
 
     @Override
     public IPage<Project> listProjects(int page, int size, String status, Integer collegeId,
-                                       Integer applyYear, String projectName, Integer leaderId, Integer teacherId) {
-        return baseMapper.selectProjectPage(new Page<>(page, size), status, collegeId, applyYear, projectName, leaderId, teacherId);
+                                       Integer applyYear, String projectName, Integer leaderId,
+                                       Integer teacherId, Integer memberUserId) {
+        return baseMapper.selectProjectPage(new Page<>(page, size), status, collegeId, applyYear, projectName, leaderId, teacherId, memberUserId);
     }
 
     @Override
@@ -139,6 +140,9 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         }
         if (!"draft".equals(project.getStatus()) && !"rejected".equals(project.getStatus())) {
             throw new RuntimeException("仅草稿或被驳回的项目可提交");
+        }
+        if (project.getTeacherId() == null) {
+            throw new RuntimeException("请先选择指导老师后再提交");
         }
         project.setStatus("wait_teacher_audit");
         boolean updated = updateById(project);

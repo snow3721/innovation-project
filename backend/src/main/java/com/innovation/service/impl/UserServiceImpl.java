@@ -10,6 +10,8 @@ import com.innovation.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
@@ -32,5 +34,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         wrapper.orderByDesc(User::getCreateTime);
         return page(new Page<>(page, size), wrapper);
+    }
+
+    @Override
+    public List<User> listTeachers(Integer collegeId, String realName) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getRole, "teacher");
+        wrapper.eq(User::getStatus, 1);
+        if (collegeId != null) {
+            wrapper.eq(User::getCollegeId, collegeId);
+        }
+        if (StringUtils.hasText(realName)) {
+            wrapper.like(User::getRealName, realName);
+        }
+        wrapper.select(User::getUserId, User::getRealName, User::getCollegeId, User::getMajor, User::getPhone, User::getEmail);
+        wrapper.orderByAsc(User::getRealName);
+        return list(wrapper);
     }
 }

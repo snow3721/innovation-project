@@ -32,6 +32,12 @@
             <if test="teacherId != null">
                 AND p.teacher_id = #{teacherId}
             </if>
+            <if test="memberUserId != null">
+                AND (
+                    p.leader_id = #{memberUserId}
+                    OR EXISTS (SELECT 1 FROM project_member pm WHERE pm.project_id = p.project_id AND pm.user_id = #{memberUserId})
+                )
+            </if>
         </where>
         ORDER BY p.apply_time DESC
     </select>

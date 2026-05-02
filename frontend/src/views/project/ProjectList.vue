@@ -1,8 +1,8 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h2>项目管理</h2>
-      <el-button type="primary" @click="$router.push('/projects/create')">
+      <h2>{{ isStudent ? '我的项目' : '项目管理' }}</h2>
+      <el-button v-if="!isStudent || true" type="primary" @click="$router.push('/projects/create')">
         <el-icon><Plus /></el-icon> 创建项目
       </el-button>
     </div>
@@ -13,7 +13,7 @@
         <el-select v-model="filters.status" placeholder="项目状态" clearable style="width: 160px" @change="loadData">
           <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
         </el-select>
-        <el-select v-model="filters.collegeId" placeholder="所属学院" clearable style="width: 160px" @change="loadData">
+        <el-select v-if="!isStudent" v-model="filters.collegeId" placeholder="所属学院" clearable style="width: 160px" @change="loadData">
           <el-option v-for="c in colleges" :key="c.collegeId" :label="c.collegeName" :value="c.collegeId" />
         </el-select>
         <el-select v-model="filters.applyYear" placeholder="申报年份" clearable style="width: 120px" @change="loadData">
@@ -32,7 +32,7 @@
         </el-table-column>
         <el-table-column prop="leaderName" label="负责人" width="100" sortable />
         <el-table-column prop="teacherName" label="指导老师" width="100" sortable />
-        <el-table-column prop="collegeName" label="所属学院" width="120" sortable :filters="collegeFilters" :filter-method="filterCollege" />
+        <el-table-column v-if="!isStudent" prop="collegeName" label="所属学院" width="120" sortable :filters="collegeFilters" :filter-method="filterCollege" />
         <el-table-column prop="catName" label="类别" width="110" :filters="catFilters" :filter-method="filterCat" />
         <el-table-column prop="status" label="状态" width="110">
           <template #default="{ row }">
@@ -46,7 +46,7 @@
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="$router.push(`/projects/${row.projectId}`)">查看</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canDelete" link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -72,6 +72,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getProjects, deleteProject } from '@/api/project'
 import { getColleges } from '@/api/college'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isStudent = computed(() => userStore.role === 'student')
+const canDelete = computed(() => ['college_admin', 'school_admin'].includes(userStore.role))
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -123,7 +128,10 @@ function handleSort() { loadData() }
 async function loadData() {
   loading.value = true
   try {
-    const res: any = await getProjects({ page: page.value, size: size.value, ...filters })
+    const params: any = { page: page.value, size: size.value, ...filters }
+    // 清理空值
+    Object.keys(params).forEach(k => { if (params[k] === '' || params[k] === undefined) delete params[k] })
+    const res: any = await getProjects(params)
     tableData.value = res.data?.list || []
     total.value = res.data?.total || 0
   } catch {} finally { loading.value = false }
@@ -143,7 +151,9 @@ async function handleDelete(row: any) {
 }
 
 onMounted(async () => {
-  try { const res: any = await getColleges(); colleges.value = res.data || [] } catch {}
+  if (!isStudent.value) {
+    try { const res: any = await getColleges(); colleges.value = res.data || [] } catch {}
+  }
   loadData()
 })
 </script>

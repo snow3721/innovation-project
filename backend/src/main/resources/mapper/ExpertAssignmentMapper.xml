@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.innovation.mapper.ExpertAssignmentMapper">
+
+    <select id="selectAssignmentPageWithDetail" resultType="com.innovation.entity.ExpertAssignment">
+        SELECT ea.*,
+               e.real_name AS expertName,
+               e.research_field AS expertField,
+               p.project_name AS projectName
+        FROM expert_assignment ea
+        LEFT JOIN expert e ON ea.expert_id = e.expert_id
+        LEFT JOIN project p ON ea.project_id = p.project_id
+        <where>
+            <if test="projectId != null">
+                AND ea.project_id = #{projectId}
+            </if>
+            <if test="stage != null and stage != ''">
+                AND ea.stage = #{stage}
+            </if>
+        </where>
+        ORDER BY ea.assign_time DESC
+    </select>
+
+</mapper>

@@ -25,4 +25,10 @@ public class ExpertAssignment {
 
     @TableField(exist = false)
     private String expertName;
+
+    @TableField(exist = false)
+    private String expertField;
+
+    @TableField(exist = false)
+    private String projectName;
 }

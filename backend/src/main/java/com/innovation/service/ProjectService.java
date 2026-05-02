@@ -10,7 +10,8 @@ public interface ProjectService extends IService<Project> {
     Project createProject(ProjectCreateDTO dto, Integer userId);
 
     IPage<Project> listProjects(int page, int size, String status, Integer collegeId,
-                                Integer applyYear, String projectName, Integer leaderId, Integer teacherId);
+                                Integer applyYear, String projectName, Integer leaderId,
+                                Integer teacherId, Integer memberUserId);
 
     Project getProjectDetail(Integer projectId);
 
