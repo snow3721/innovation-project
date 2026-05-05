@@ -109,6 +109,14 @@ public class ReviewController {
         return Result.success(new PageResult<>(assignmentPage.getTotal(), assignmentPage.getRecords()));
     }
 
+    @ApiOperation("撤销专家分配")
+    @DeleteMapping("/assignments/{id}")
+    @PreAuthorize("hasAnyRole('college_admin','school_admin')")
+    public Result<Void> deleteAssignment(@PathVariable Integer id) {
+        expertAssignmentService.deleteAssignment(id);
+        return Result.success();
+    }
+
     @ApiOperation("获取我的待评审任务")
     @GetMapping("/my-tasks")
     @PreAuthorize("hasAnyRole('expert','teacher','college_admin','school_admin')")

@@ -45,6 +45,20 @@ public class ExpertAssignmentServiceImpl extends ServiceImpl<ExpertAssignmentMap
 
     @Override
     public void assignExpert(Integer projectId, Integer expertId, String stage, java.time.LocalDateTime deadline) {
+        // 评审回避机制：校内专家不可评审本学院项目
+        Expert expert = expertService.getById(expertId);
+        if (expert != null && expert.getIsInner() != null && expert.getIsInner() == 1) {
+            Project project = projectService.getById(projectId);
+            if (project != null) {
+                // 通过专家关联的user获取其所属学院
+                User expertUser = userService.getById(expert.getUserId());
+                if (expertUser != null && expertUser.getCollegeId() != null
+                        && expertUser.getCollegeId().equals(project.getCollegeId())) {
+                    throw new RuntimeException("回避原则：不可分配与项目负责人同学院的校内专家");
+                }
+            }
+        }
+
         ExpertAssignment assignment = new ExpertAssignment();
         assignment.setProjectId(projectId);
         assignment.setExpertId(expertId);
@@ -60,6 +74,38 @@ public class ExpertAssignmentServiceImpl extends ServiceImpl<ExpertAssignmentMap
                 projectService.updateProjectStatus(projectId, "wait_college_review", null);
             } else if ("school".equals(stage) && "wait_school_assign".equals(project.getStatus())) {
                 projectService.updateProjectStatus(projectId, "wait_school_review", null);
+            }
+        }
+    }
+
+    @Override
+    public void deleteAssignment(Integer assignmentId) {
+        ExpertAssignment assignment = getById(assignmentId);
+        if (assignment == null) {
+            throw new RuntimeException("专家分配记录不存在");
+        }
+        // 检查该专家是否已打分
+        long scoredCount = reviewScoreService.count(new LambdaQueryWrapper<ProjectReviewScore>()
+                .eq(ProjectReviewScore::getProjectId, assignment.getProjectId())
+                .eq(ProjectReviewScore::getExpertId, assignment.getExpertId())
+                .eq(ProjectReviewScore::getReviewStage, assignment.getStage()));
+        if (scoredCount > 0) {
+            throw new RuntimeException("该专家已进行评审打分，无法撤销分配");
+        }
+        removeById(assignmentId);
+
+        // 检查该项目该阶段是否还有其他分配，若无则回退项目状态
+        long remainingCount = count(new LambdaQueryWrapper<ExpertAssignment>()
+                .eq(ExpertAssignment::getProjectId, assignment.getProjectId())
+                .eq(ExpertAssignment::getStage, assignment.getStage()));
+        if (remainingCount == 0) {
+            Project project = projectService.getById(assignment.getProjectId());
+            if (project != null) {
+                if ("college".equals(assignment.getStage()) && "wait_college_review".equals(project.getStatus())) {
+                    projectService.updateProjectStatus(assignment.getProjectId(), "wait_college_assign", null);
+                } else if ("school".equals(assignment.getStage()) && "wait_school_review".equals(project.getStatus())) {
+                    projectService.updateProjectStatus(assignment.getProjectId(), "wait_school_assign", null);
+                }
             }
         }
     }

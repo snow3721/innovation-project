@@ -12,6 +12,10 @@ import com.innovation.entity.ProjectMember;
 import com.innovation.entity.User;
 import com.innovation.mapper.ProjectMemberMapper;
 import com.innovation.mq.MessageProducer;
+import com.innovation.entity.ProjectConclude;
+import com.innovation.entity.ProjectMidCheck;
+import com.innovation.service.ProjectConcludeService;
+import com.innovation.service.ProjectMidCheckService;
 import com.innovation.service.ProjectService;
 import com.innovation.service.UserService;
 import io.swagger.annotations.Api;
@@ -39,6 +43,12 @@ public class ProjectController {
 
     @Autowired
     private ProjectMemberMapper projectMemberMapper;
+
+    @Autowired
+    private ProjectMidCheckService midCheckService;
+
+    @Autowired
+    private ProjectConcludeService concludeService;
 
     @ApiOperation("创建项目")
     @PostMapping
@@ -234,6 +244,126 @@ public class ProjectController {
     public Result<Void> deleteProject(@PathVariable Integer id) {
         projectService.removeById(id);
         return Result.success();
+    }
+
+    @ApiOperation("启动项目")
+    @PostMapping("/{id}/start")
+    @PreAuthorize("hasAnyRole('school_admin')")
+    public Result<Void> startProject(@PathVariable Integer id) {
+        projectService.updateProjectStatus(id, "running", null);
+        return Result.success();
+    }
+
+    // ==================== 中期检查 ====================
+
+    @ApiOperation("提交中期检查")
+    @PostMapping("/{id}/mid-check")
+    @PreAuthorize("hasAnyRole('student','teacher')")
+    public Result<ProjectMidCheck> submitMidCheck(@PathVariable Integer id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Integer userId = (Integer) auth.getPrincipal();
+        ProjectMidCheck midCheck = midCheckService.submitMidCheck(id, userId);
+        // 通知指导老师/管理员
+        Project project = projectService.getById(id);
+        if (project != null) {
+            MessageSendDTO msg = new MessageSendDTO();
+            msg.setReceiverId(project.getTeacherId());
+            msg.setSenderId(userId);
+            msg.setTitle("中期检查提交通知");
+            msg.setContent("项目「" + project.getProjectName() + "」已提交中期检查报告，请及时审核。");
+            msg.setRelationId(id);
+            messageProducer.sendAuditMessage(msg);
+        }
+        return Result.success(midCheck);
+    }
+
+    @ApiOperation("审核中期检查")
+    @PostMapping("/mid-check/{midId}/audit")
+    @PreAuthorize("hasAnyRole('teacher','college_admin','school_admin')")
+    public Result<ProjectMidCheck> auditMidCheck(@PathVariable Integer midId, @RequestBody AuditDTO dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Integer userId = (Integer) auth.getPrincipal();
+        ProjectMidCheck midCheck = midCheckService.auditMidCheck(midId, dto.getResult(), userId);
+        // 通知项目负责人
+        Project project = projectService.getById(midCheck.getProjectId());
+        if (project != null) {
+            MessageSendDTO msg = new MessageSendDTO();
+            msg.setReceiverId(project.getLeaderId());
+            msg.setSenderId(userId);
+            msg.setTitle("中期检查审核结果");
+            msg.setContent("项目「" + project.getProjectName() + "」中期检查审核" + ("pass".equals(dto.getResult()) ? "通过" : "未通过") + "。");
+            msg.setRelationId(midCheck.getProjectId());
+            messageProducer.sendAuditMessage(msg);
+        }
+        return Result.success(midCheck);
+    }
+
+    @ApiOperation("获取中期检查列表")
+    @GetMapping("/mid-checks")
+    @PreAuthorize("hasAnyRole('teacher','college_admin','school_admin')")
+    public Result<PageResult<ProjectMidCheck>> listMidChecks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer projectId) {
+        IPage<ProjectMidCheck> midPage = midCheckService.listMidChecks(page, size, status, projectId);
+        return Result.success(new PageResult<>(midPage.getTotal(), midPage.getRecords()));
+    }
+
+    // ==================== 结题验收 ====================
+
+    @ApiOperation("提交结题申请")
+    @PostMapping("/{id}/conclude")
+    @PreAuthorize("hasAnyRole('student','teacher')")
+    public Result<ProjectConclude> submitConclude(@PathVariable Integer id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Integer userId = (Integer) auth.getPrincipal();
+        ProjectConclude conclude = concludeService.submitConclude(id, userId);
+        // 通知管理员
+        Project project = projectService.getById(id);
+        if (project != null) {
+            MessageSendDTO msg = new MessageSendDTO();
+            msg.setReceiverId(project.getTeacherId());
+            msg.setSenderId(userId);
+            msg.setTitle("结题申请提交通知");
+            msg.setContent("项目「" + project.getProjectName() + "」已提交结题申请，请及时审核。");
+            msg.setRelationId(id);
+            messageProducer.sendAuditMessage(msg);
+        }
+        return Result.success(conclude);
+    }
+
+    @ApiOperation("审核结题申请")
+    @PostMapping("/conclude/{concludeId}/audit")
+    @PreAuthorize("hasAnyRole('teacher','college_admin','school_admin')")
+    public Result<ProjectConclude> auditConclude(@PathVariable Integer concludeId, @RequestBody AuditDTO dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Integer userId = (Integer) auth.getPrincipal();
+        ProjectConclude conclude = concludeService.auditConclude(concludeId, dto.getResult(), userId);
+        // 通知项目负责人
+        Project project = projectService.getById(conclude.getProjectId());
+        if (project != null) {
+            MessageSendDTO msg = new MessageSendDTO();
+            msg.setReceiverId(project.getLeaderId());
+            msg.setSenderId(userId);
+            msg.setTitle("结题审核结果");
+            msg.setContent("项目「" + project.getProjectName() + "」结题审核" + ("pass".equals(dto.getResult()) ? "通过，项目已结题！" : "未通过") + "。");
+            msg.setRelationId(conclude.getProjectId());
+            messageProducer.sendAuditMessage(msg);
+        }
+        return Result.success(conclude);
+    }
+
+    @ApiOperation("获取结题申请列表")
+    @GetMapping("/concludes")
+    @PreAuthorize("hasAnyRole('teacher','college_admin','school_admin')")
+    public Result<PageResult<ProjectConclude>> listConcludes(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer projectId) {
+        IPage<ProjectConclude> concludePage = concludeService.listConcludes(page, size, status, projectId);
+        return Result.success(new PageResult<>(concludePage.getTotal(), concludePage.getRecords()));
     }
 
     private String extractRole(Authentication auth) {

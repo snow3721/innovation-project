@@ -1,8 +1,15 @@
--- 高校创新项目管理系统 数据库建表脚本
+-- ============================================================
+-- 高校创新项目管理系统 - 数据库架构脚本 (DDL)
 -- 数据库: innovation_project
+-- 字符集: utf8mb4
+-- ============================================================
 
 CREATE DATABASE IF NOT EXISTS innovation_project DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE innovation_project;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ==================== 基础表 ====================
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS `user` (
@@ -37,6 +44,8 @@ CREATE TABLE IF NOT EXISTS `project_category` (
   `remark` VARCHAR(200) COMMENT '类别说明',
   UNIQUE KEY `idx_cat_name` (`cat_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目类别表';
+
+-- ==================== 项目相关表 ====================
 
 -- 项目主表
 CREATE TABLE IF NOT EXISTS `project` (
@@ -75,6 +84,37 @@ CREATE TABLE IF NOT EXISTS `project_member` (
   KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目成员表';
 
+-- 里程碑表
+CREATE TABLE IF NOT EXISTS `project_milestone` (
+  `milestone_id` INT PRIMARY KEY AUTO_INCREMENT,
+  `project_id` INT NOT NULL,
+  `milestone_name` VARCHAR(50) NOT NULL,
+  `plan_time` DATE NOT NULL,
+  `actual_time` DATE,
+  `status` ENUM('pending','doing','finished','overdue') NOT NULL DEFAULT 'pending',
+  `is_warning` TINYINT DEFAULT 0,
+  KEY `idx_project` (`project_id`),
+  KEY `idx_plan_time` (`plan_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='里程碑表';
+
+-- 中期检查表
+CREATE TABLE IF NOT EXISTS `project_mid_check` (
+  `mid_id` INT PRIMARY KEY AUTO_INCREMENT,
+  `project_id` INT NOT NULL UNIQUE,
+  `submit_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `status` ENUM('waiting','pass','reject') DEFAULT 'waiting'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中期检查表';
+
+-- 结题验收表
+CREATE TABLE IF NOT EXISTS `project_conclude` (
+  `conclude_id` INT PRIMARY KEY AUTO_INCREMENT,
+  `project_id` INT NOT NULL UNIQUE,
+  `submit_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `status` ENUM('waiting','pass','reject') DEFAULT 'waiting'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='结题验收表';
+
+-- ==================== 专家与评审表 ====================
+
 -- 专家库表
 CREATE TABLE IF NOT EXISTS `expert` (
   `expert_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '专家ID',
@@ -111,10 +151,13 @@ CREATE TABLE IF NOT EXISTS `project_review_score` (
   `score_team` TINYINT COMMENT '团队得分',
   `score_value` TINYINT COMMENT '价值得分',
   `total_score` TINYINT NOT NULL COMMENT '总分',
+  `opinion` TEXT COMMENT '评审意见',
   `score_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `idx_expert_project` (`project_id`,`expert_id`,`review_stage`),
   KEY `idx_project_stage` (`project_id`,`review_stage`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评审打分表';
+
+-- ==================== 审核表 ====================
 
 -- 导师审核表
 CREATE TABLE IF NOT EXISTS `project_teacher_audit` (
@@ -122,6 +165,7 @@ CREATE TABLE IF NOT EXISTS `project_teacher_audit` (
   `project_id` INT NOT NULL UNIQUE COMMENT '项目ID',
   `teacher_id` INT NOT NULL,
   `result` ENUM('pass','reject') NOT NULL,
+  `opinion` TEXT COMMENT '审核意见',
   `audit_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   KEY `idx_teacher` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='导师审核表';
@@ -132,6 +176,7 @@ CREATE TABLE IF NOT EXISTS `project_college_audit` (
   `project_id` INT NOT NULL UNIQUE,
   `admin_id` INT NOT NULL,
   `result` ENUM('pass','reject') NOT NULL,
+  `opinion` TEXT COMMENT '审核意见',
   `audit_time` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学院终审表';
 
@@ -141,29 +186,11 @@ CREATE TABLE IF NOT EXISTS `project_school_audit` (
   `project_id` INT NOT NULL UNIQUE,
   `admin_id` INT NOT NULL,
   `result` ENUM('pass','reject') NOT NULL,
+  `opinion` TEXT COMMENT '审核意见',
   `audit_time` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学校终审表';
 
--- 里程碑表
-CREATE TABLE IF NOT EXISTS `project_milestone` (
-  `milestone_id` INT PRIMARY KEY AUTO_INCREMENT,
-  `project_id` INT NOT NULL,
-  `milestone_name` VARCHAR(50) NOT NULL,
-  `plan_time` DATE NOT NULL,
-  `actual_time` DATE,
-  `status` ENUM('pending','doing','finished','overdue') NOT NULL DEFAULT 'pending',
-  `is_warning` TINYINT DEFAULT 0,
-  KEY `idx_project` (`project_id`),
-  KEY `idx_plan_time` (`plan_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='里程碑表';
-
--- 中期检查表
-CREATE TABLE IF NOT EXISTS `project_mid_check` (
-  `mid_id` INT PRIMARY KEY AUTO_INCREMENT,
-  `project_id` INT NOT NULL UNIQUE,
-  `submit_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `status` ENUM('waiting','pass','reject') DEFAULT 'waiting'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中期检查表';
+-- ==================== 成果与附件表 ====================
 
 -- 成果主表
 CREATE TABLE IF NOT EXISTS `project_achievement` (
@@ -179,14 +206,6 @@ CREATE TABLE IF NOT EXISTS `project_achievement` (
   KEY `idx_time` (`publish_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成果主表';
 
--- 结题验收表
-CREATE TABLE IF NOT EXISTS `project_conclude` (
-  `conclude_id` INT PRIMARY KEY AUTO_INCREMENT,
-  `project_id` INT NOT NULL UNIQUE,
-  `submit_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `status` ENUM('waiting','pass','reject') DEFAULT 'waiting'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='结题验收表';
-
 -- 附件元数据表
 CREATE TABLE IF NOT EXISTS `attachment` (
   `attach_id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -199,6 +218,8 @@ CREATE TABLE IF NOT EXISTS `attachment` (
   `upload_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   KEY `idx_relation` (`relation_id`,`attach_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='附件元数据表';
+
+-- ==================== 消息表 ====================
 
 -- 消息表
 CREATE TABLE IF NOT EXISTS `message` (
@@ -218,51 +239,4 @@ CREATE TABLE IF NOT EXISTS `message` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心表';
 
--- ============
-======== 初始数据 ====================
--- 使用 INSERT IGNORE 避免重复插入
--- 完整示例数据见 data.sql
-
--- 学院数据
-INSERT IGNORE INTO `college` (`college_name`, `sort`) VALUES
-('计算机学院', 1),
-('电子工程学院', 2),
-('机械工程学院', 3),
-('化工学院', 4),
-('经济管理学院', 5),
-('外国语学院', 6),
-('数学学院', 7),
-('物理学院', 8);
-
--- 项目类别数据
-INSERT IGNORE INTO `project_category` (`cat_name`, `remark`) VALUES
-('创新训练', '面向本科生个人或团队，开展创新性研究项目'),
-('创业训练', '面向本科生团队，开展创业模拟与实训'),
-('创业实践', '面向创业团队，开展真实创业项目实践');
-
--- 管理员账户(密码: admin123) — 完整数据在 data.sql 中
-INSERT IGNORE INTO `user` (`username`, `password`, `real_name`, `role`, `status`) VALUES
-('admin', '$2a$10$M9huYl/fM0sBarK1v.4WU.JJmbG/6Bixi2vkTUEnasSPeDVg8H0N.', '系统管理员', 'school_admin', 1);
-
--- ==================== 数据迁移：新增"待分配"状态 ====================
--- 将已有项目中的 wait_college_review 转为 wait_college_assign（尚未分配专家的项目）
--- 将已有项目中的 wait_school_review 转为 wait_school_assign（尚未分配专家的项目）
--- 注意：已分配了专家且专家已开始评审的项目应保留原状态
--- 以下为全量迁移脚本，适用于无已有评审数据的新部署环境
-
--- 修改 project 表的 status 枚举，新增 wait_college_assign 和 wait_school_assign
--- ALTER TABLE `project` MODIFY COLUMN `status` ENUM(
---   'draft','wait_teacher_audit','wait_college_assign','wait_college_review','wait_college_audit',
---   'wait_school_assign','wait_school_review','wait_school_audit','approved','rejected',
---   'running','mid_checking','conclude_apply','concluded'
--- ) NOT NULL DEFAULT 'draft' COMMENT '项目状态';
-
--- 对于已有数据库：将处于 wait_college_review 且无专家分配记录的项目转为 wait_college_assign
--- UPDATE `project` p SET p.status = 'wait_college_assign'
---   WHERE p.status = 'wait_college_review'
---   AND NOT EXISTS (SELECT 1 FROM `expert_assignment` ea WHERE ea.project_id = p.project_id AND ea.stage = 'college');
-
--- 对于已有数据库：将处于 wait_school_review 且无专家分配记录的项目转为 wait_school_assign
--- UPDATE `project` p SET p.status = 'wait_school_assign'
---   WHERE p.status = 'wait_school_review'
---   AND NOT EXISTS (SELECT 1 FROM `expert_assignment` ea WHERE ea.project_id = p.project_id AND ea.stage = 'school');
+SET FOREIGN_KEY_CHECKS = 1;

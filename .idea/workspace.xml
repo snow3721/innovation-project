@@ -4,7 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2c1ff73a-e701-43cb-b22e-a5d10fafdbbd" name="更改" comment="" />
+    <list default="true" id="2c1ff73a-e701-43cb-b22e-a5d10fafdbbd" name="更改" comment="初始化提交">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/ProjectController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/ReviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/ReviewController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/StatisticsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/controller/StatisticsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectCollegeAudit.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectCollegeAudit.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectReviewScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectReviewScore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectSchoolAudit.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectSchoolAudit.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectTeacherAudit.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/entity/ProjectTeacherAudit.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/ExpertAssignmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/ExpertAssignmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/AttachmentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/AttachmentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ExpertAssignmentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ExpertAssignmentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ProjectReviewScoreServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ProjectReviewScoreServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ProjectServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/innovation/service/impl/ProjectServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/data.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/data.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/project.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/review.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/review.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/statistics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/statistics.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/project/ProjectCreate.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/project/ProjectCreate.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/project/ProjectDetail.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/project/ProjectDetail.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/statistics/StatisticsPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/statistics/StatisticsPage.vue" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,37 +50,38 @@
     <option name="showMembers" value="true" />
     <option name="showVisibilityIcons" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Maven.innovation-project [clean].executor": "Run",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "Spring Boot.InnovationApplication.executor": "Run",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/innovation",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true",
-    "应用程序.InnovationApplication.executor": "Run",
-    "数据库脚本.data.sql.executor": "Run",
-    "数据库脚本.schema.sql.executor": "Run"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven.innovation-project [clean].executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;Spring Boot.InnovationApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/innovation&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
+    &quot;应用程序.InnovationApplication.executor&quot;: &quot;Run&quot;,
+    &quot;数据库脚本.data.sql.executor&quot;: &quot;Run&quot;,
+    &quot;数据库脚本.schema.sql.executor&quot;: &quot;Run&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql_aurora_aws"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql_aurora_aws&quot;
     ],
-    "RunConfigurationTargetLRU": [
-      "8d6b5ed9-882d-48f9-9b7f-09b4d24363df/schema/\"innovation_project\""
+    &quot;RunConfigurationTargetLRU&quot;: [
+      &quot;8d6b5ed9-882d-48f9-9b7f-09b4d24363df/schema/\&quot;innovation_project\&quot;&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Spring Boot.InnovationApplication">
     <configuration name="InnovationApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.innovation.InnovationApplication" />
@@ -118,7 +142,14 @@
       <workItem from="1776666491815" duration="3282000" />
       <workItem from="1776677971285" duration="1742000" />
       <workItem from="1776758284498" duration="591000" />
-      <workItem from="1777015369572" duration="1052000" />
+      <workItem from="1777015369572" duration="5972000" />
+      <workItem from="1777537161046" duration="6826000" />
+      <workItem from="1777700808582" duration="7955000" />
+      <workItem from="1777714405033" duration="3327000" />
+      <workItem from="1777785535216" duration="324000" />
+      <workItem from="1777966558726" duration="16000" />
+      <workItem from="1777980260377" duration="236000" />
+      <workItem from="1777981013484" duration="367000" />
     </task>
     <servers />
   </component>
@@ -130,10 +161,26 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="初始化提交" />
+    <option name="LAST_COMMIT_MESSAGE" value="初始化提交" />
   </component>
 </project>

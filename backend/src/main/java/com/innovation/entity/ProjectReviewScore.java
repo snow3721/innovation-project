@@ -28,6 +28,8 @@ public class ProjectReviewScore {
 
     private Integer totalScore;
 
+    private String opinion;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime scoreTime;
 

@@ -65,6 +65,7 @@ public class ProjectReviewScoreServiceImpl extends ServiceImpl<ProjectReviewScor
         score.setScoreTeam(dto.getScoreTeam());
         score.setScoreValue(dto.getScoreValue());
         score.setTotalScore(dto.getTotalScore());
+        score.setOpinion(dto.getOpinion());
         save(score);
 
         checkAndAdvanceStage(dto.getProjectId(), dto.getStage());

@@ -49,21 +49,29 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             Map.entry("draft", Arrays.asList("wait_teacher_audit")),
             Map.entry("wait_teacher_audit", Arrays.asList("draft", "wait_college_assign", "rejected")),
             Map.entry("wait_college_assign", Arrays.asList("wait_college_review")),
-            Map.entry("wait_college_review", Arrays.asList("wait_college_audit")),
+            Map.entry("wait_college_review", Arrays.asList("wait_college_audit", "wait_college_assign")),
             Map.entry("wait_college_audit", Arrays.asList("wait_school_assign", "rejected")),
             Map.entry("wait_school_assign", Arrays.asList("wait_school_review")),
-            Map.entry("wait_school_review", Arrays.asList("wait_school_audit")),
+            Map.entry("wait_school_review", Arrays.asList("wait_school_audit", "wait_school_assign")),
             Map.entry("wait_school_audit", Arrays.asList("approved", "rejected")),
             Map.entry("approved", Arrays.asList("running")),
-            Map.entry("running", Arrays.asList("mid_checking")),
+            Map.entry("running", Arrays.asList("mid_checking", "conclude_apply")),
             Map.entry("mid_checking", Arrays.asList("running", "conclude_apply")),
-            Map.entry("conclude_apply", Arrays.asList("concluded", "rejected")),
+            Map.entry("conclude_apply", Arrays.asList("concluded", "running")),
             Map.entry("rejected", Arrays.asList("draft"))
     );
 
     @Override
     @Transactional
     public Project createProject(ProjectCreateDTO dto, Integer userId) {
+        // 同期参与项目数限制：同一学生最多参与2个进行中的项目
+        checkMemberProjectLimit(userId);
+        if (dto.getMembers() != null) {
+            for (ProjectCreateDTO.MemberDTO memberDTO : dto.getMembers()) {
+                checkMemberProjectLimit(memberDTO.getUserId());
+            }
+        }
+
         Project project = new Project();
         project.setProjectName(dto.getProjectName());
         project.setCatId(dto.getCatId());
@@ -186,6 +194,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         audit.setProjectId(projectId);
         audit.setTeacherId(teacherId);
         audit.setResult(result);
+        audit.setOpinion(opinion);
         teacherAuditMapper.insert(audit);
         // 更新状态
         if ("pass".equals(result)) {
@@ -214,6 +223,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         audit.setProjectId(projectId);
         audit.setAdminId(adminId);
         audit.setResult(result);
+        audit.setOpinion(opinion);
         collegeAuditMapper.insert(audit);
         // 更新状态
         if ("pass".equals(result)) {
@@ -242,6 +252,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         audit.setProjectId(projectId);
         audit.setAdminId(adminId);
         audit.setResult(result);
+        audit.setOpinion(opinion);
         schoolAuditMapper.insert(audit);
         // 更新状态
         if ("pass".equals(result)) {
@@ -273,6 +284,27 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             case "conclude_apply": return "待结题";
             case "concluded": return "已结题";
             default: return status;
+        }
+    }
+
+    /**
+     * 检查用户同期参与项目数量，进行中的项目最多2个
+     */
+    private void checkMemberProjectLimit(Integer userId) {
+        List<String> activeStatuses = Arrays.asList(
+                "draft", "wait_teacher_audit", "wait_college_assign", "wait_college_review",
+                "wait_college_audit", "wait_school_assign", "wait_school_review",
+                "wait_school_audit", "approved", "running", "mid_checking", "conclude_apply"
+        );
+        long count = projectMemberMapper.selectCount(new LambdaQueryWrapper<ProjectMember>()
+                .eq(ProjectMember::getUserId, userId));
+        // 需要进一步筛选项目状态为进行中的
+        long activeCount = projectMemberMapper.selectCount(new LambdaQueryWrapper<ProjectMember>()
+                .eq(ProjectMember::getUserId, userId)
+                .inSql(ProjectMember::getProjectId,
+                        "SELECT project_id FROM project WHERE status NOT IN ('concluded','rejected')"));
+        if (activeCount >= 2) {
+            throw new RuntimeException("该用户同期参与的进行中项目已达上限（2项），无法继续添加");
         }
     }
 }

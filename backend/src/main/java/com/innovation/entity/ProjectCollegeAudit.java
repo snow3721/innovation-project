@@ -18,6 +18,8 @@ public class ProjectCollegeAudit {
 
     private String result;
 
+    private String opinion;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime auditTime;
 }

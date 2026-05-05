@@ -35,6 +35,7 @@ const routes = [
       { path: 'colleges', name: 'Colleges', component: () => import('@/views/college/CollegeList.vue'), meta: { title: '学院管理', roles: ['school_admin'] } },
       { path: 'categories', name: 'Categories', component: () => import('@/views/category/CategoryList.vue'), meta: { title: '类别管理', roles: ['school_admin'] } },
       { path: 'statistics', name: 'Statistics', component: () => import('@/views/statistics/StatisticsPage.vue'), meta: { title: '数据统计', roles: ['school_admin', 'college_admin'] } },
+      { path: 'statistics/dashboard', name: 'DashboardScreen', component: () => import('@/views/statistics/DashboardScreen.vue'), meta: { title: '数据大屏', roles: ['school_admin', 'college_admin'] } },
       { path: 'profile', name: 'Profile', component: () => import('@/views/Profile.vue'), meta: { title: '个人中心' } },
     ]
   }

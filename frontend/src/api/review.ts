@@ -27,3 +27,7 @@ export function getPendingProjects(params: any) {
 export function getReviewOverview() {
   return request.get('/reviews/overview')
 }
+
+export function deleteAssignment(id: number) {
+  return request.delete(`/reviews/assignments/${id}`)
+}

@@ -1,6 +1,16 @@
 <template>
   <div class="page-container">
-    <div class="page-header"><h2>数据统计</h2></div>
+    <div class="page-header">
+      <h2>数据统计</h2>
+      <el-button type="success" @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出Excel
+      </el-button>
+      <el-button type="primary" @click="$router.push('/statistics/dashboard')">
+        <el-icon><Monitor /></el-icon>
+        数据大屏
+      </el-button>
+    </div>
 
     <el-row :gutter="16">
       <el-col :span="6">
@@ -81,8 +91,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
-import { Folder, CircleCheck, Trophy, TrendCharts } from '@element-plus/icons-vue'
-import { getOverview, getByCategory, getByYear, getByCollege } from '@/api/statistics'
+import { Folder, CircleCheck, Trophy, TrendCharts, Download, Monitor } from '@element-plus/icons-vue'
+import { getOverview, getByCategory, getByYear, getByCollege, exportExcel } from '@/api/statistics'
 
 const overview = ref<any>({})
 const categoryChartRef = ref<HTMLElement>()
@@ -121,6 +131,21 @@ onMounted(async () => {
   loadYearData()
   loadCollegeData()
 })
+
+async function handleExport() {
+  try {
+    const res: any = await exportExcel()
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'statistics_export.xlsx'
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    // ignore
+  }
+}
 
 async function loadYearData() {
   if (!yearChartRef.value) return

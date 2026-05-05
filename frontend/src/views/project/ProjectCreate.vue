@@ -104,6 +104,7 @@
           <el-button type="primary" :loading="submitting" @click="handleSubmit('draft')">保存草稿</el-button>
           <el-button type="success" :loading="submitting" @click="handleSubmit('submit')">保存并提交</el-button>
           <el-button @click="$router.back()">取消</el-button>
+          <span v-if="autoSaveTip" style="margin-left: 16px; color: #67c23a; font-size: 13px">{{ autoSaveTip }}</span>
         </el-form-item>
       </el-form>
     </div>
@@ -111,11 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
-import { createProject, submitProject } from '@/api/project'
+import { createProject, updateProject, submitProject } from '@/api/project'
 import { getColleges } from '@/api/college'
 import { getCategories } from '@/api/category'
 import { getTeachers } from '@/api/user'
@@ -128,6 +129,9 @@ const colleges = ref<any[]>([])
 const categories = ref<any[]>([])
 const teachers = ref<any[]>([])
 const teachersLoading = ref(false)
+const projectId = ref<number | null>(null)
+const autoSaveTip = ref('')
+let autoSaveTimer: ReturnType<typeof setInterval> | null = null
 
 const form = reactive({
   projectName: '',
@@ -167,14 +171,6 @@ function onCollegeChange(collegeId: number) {
   loadTeachers(collegeId)
 }
 
-onMounted(async () => {
-  try {
-    const [cRes, catRes]: any[] = await Promise.all([getColleges(), getCategories()])
-    colleges.value = cRes.data || []
-    categories.value = catRes.data || []
-  } catch {}
-})
-
 async function handleSubmit(action: string) {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -187,6 +183,10 @@ async function handleSubmit(action: string) {
       members: form.members.filter(m => m.userId)
     }
     const res: any = await createProject(data)
+    if (res.data?.projectId) {
+      projectId.value = res.data.projectId
+      startAutoSave()
+    }
     if (action === 'submit' && res.data?.projectId) {
       await submitProject(res.data.projectId)
     }
@@ -194,6 +194,46 @@ async function handleSubmit(action: string) {
     router.push('/projects')
   } catch {} finally { submitting.value = false }
 }
+
+// 草稿自动保存
+function startAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer)
+  autoSaveTimer = setInterval(async () => {
+    if (!projectId.value) return
+    try {
+      await updateProject(projectId.value, {
+        projectName: form.projectName,
+        catId: form.catId,
+        collegeId: form.collegeId,
+        teacherId: form.teacherId,
+        totalBudget: form.totalBudget,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        content: form.content,
+        innovationPointsStr: form.innovationPointsStr,
+        techRoute: form.techRoute,
+      })
+      autoSaveTip.value = '已自动保存 ' + new Date().toLocaleTimeString()
+    } catch {
+      autoSaveTip.value = '自动保存失败'
+    }
+  }, 60000) // 每60秒自动保存
+}
+
+onMounted(async () => {
+  try {
+    const [cRes, catRes]: any[] = await Promise.all([getColleges(), getCategories()])
+    colleges.value = cRes.data || []
+    categories.value = catRes.data || []
+  } catch {}
+})
+
+onUnmounted(() => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
+    autoSaveTimer = null
+  }
+})
 </script>
 
 <style lang="scss" scoped>

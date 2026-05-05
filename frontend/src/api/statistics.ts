@@ -15,3 +15,7 @@ export function getByCollege(collegeId?: number) {
 export function getByCategory() {
   return request.get('/statistics/by-category')
 }
+
+export function exportExcel() {
+  return request.get('/statistics/export', { responseType: 'blob' })
+}

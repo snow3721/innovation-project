@@ -1,4 +1,6 @@
--- 高校创新项目管理系统 示例数据
+-- ============================================================
+-- 高校创新项目管理系统 - 初始数据脚本 (DML)
+-- 数据库: innovation_project
 -- 密码统一为: admin123 (BCrypt加密)
 -- $2a$10$M9huYl/fM0sBarK1v.4WU.JJmbG/6Bixi2vkTUEnasSPeDVg8H0N.
 --
@@ -6,13 +8,30 @@
 --   1=admin, 2-6=college_admin(学院1-5), 7-11=teacher(学院1,1,2,3,5)
 --   12-15=学生(学院1), 16-18=学生(学院2), 19-20=学生(学院3),
 --   21=学生(学院4), 22-23=学生(学院5), 24=学生(学院7), 25-26=学生(学院1)
+-- ============================================================
 
 USE innovation_project;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- ==================== 学院数据 ====================
+INSERT IGNORE INTO `college` (`college_name`, `sort`) VALUES
+('计算机学院', 1),
+('电子工程学院', 2),
+('机械工程学院', 3),
+('化工学院', 4),
+('经济管理学院', 5),
+('外国语学院', 6),
+('数学学院', 7),
+('物理学院', 8);
+
+-- ==================== 项目类别数据 ====================
+INSERT IGNORE INTO `project_category` (`cat_name`, `remark`) VALUES
+('创新训练', '面向本科生个人或团队，开展创新性研究项目'),
+('创业训练', '面向本科生团队，开展创业模拟与实训'),
+('创业实践', '面向创业团队，开展真实创业项目实践');
+
 -- ==================== 用户数据 ====================
--- 注意: schema.sql 已插入 admin(user_id=1)，INSERT IGNORE 会跳过重复
 INSERT IGNORE INTO `user` (`username`, `password`, `real_name`, `phone`, `email`, `role`, `college_id`, `major`, `status`) VALUES
 -- 管理员 (user_id=1)
 ('admin', '$2a$10$M9huYl/fM0sBarK1v.4WU.JJmbG/6Bixi2vkTUEnasSPeDVg8H0N.', '系统管理员', '13800000001', 'admin@innovation.edu.cn', 'school_admin', NULL, NULL, 1),
@@ -63,8 +82,6 @@ INSERT IGNORE INTO `expert` (`user_id`, `real_name`, `unit`, `title`, `research_
 (NULL, '冯研究员', '华为研究院', '高级研究员', '云计算', 0, 1);
 
 -- ==================== 项目数据 ====================
--- 所有 leader_id 均为 student 角色, teacher_id 均为 teacher 角色
--- college_id 与 leader 所属学院一致, teacher 所属学院与项目学院一致
 INSERT IGNORE INTO `project` (`project_name`, `cat_id`, `leader_id`, `teacher_id`, `college_id`, `apply_year`, `total_budget`, `status`, `start_time`, `end_time`) VALUES
 -- 已结题项目 (2023年)
 ('基于深度学习的图像识别系统', 1, 12, 7, 1, 2023, 15000.00, 'concluded', '2023-03-01', '2024-03-01'),
@@ -104,7 +121,6 @@ INSERT IGNORE INTO `project` (`project_name`, `cat_id`, `leader_id`, `teacher_id
 ('智能停车管理系统', 1, 13, 8, 1, 2024, 16000.00, 'conclude_apply', '2024-03-01', '2025-03-01');
 
 -- ==================== 项目成员数据 ====================
--- 所有 user_id 均为 student 角色, leader 与 project.leader_id 一致
 INSERT IGNORE INTO `project_member` (`project_id`, `user_id`, `role`) VALUES
 -- 项目1: 基于深度学习的图像识别系统 (leader=12/王小明)
 (1, 12, 'leader'), (1, 13, 'normal'), (1, 25, 'normal'),
@@ -148,10 +164,6 @@ INSERT IGNORE INTO `project_member` (`project_id`, `user_id`, `role`) VALUES
 (21, 13, 'leader'), (21, 12, 'normal');
 
 -- ==================== 导师审核数据 ====================
--- teacher_id 与 project.teacher_id 一致
--- 项目16(wait_teacher_audit)尚未审核，无记录
--- 项目18(draft)未提交，无记录
--- 项目20(rejected at teacher_audit): result=reject
 INSERT IGNORE INTO `project_teacher_audit` (`project_id`, `teacher_id`, `result`) VALUES
 (1, 7, 'pass'), (2, 8, 'pass'), (3, 9, 'pass'),
 (4, 7, 'pass'), (5, 8, 'pass'), (6, 9, 'pass'), (7, 10, 'pass'), (8, 11, 'pass'),
@@ -162,8 +174,6 @@ INSERT IGNORE INTO `project_teacher_audit` (`project_id`, `teacher_id`, `result`
 (19, 11, 'pass'), (20, 8, 'reject'), (21, 8, 'pass');
 
 -- ==================== 学院终审数据 ====================
--- admin_id 为对应学院的 college_admin, 且项目已到达 wait_school_review 及以上阶段
--- 项目15(wait_college_review)和17(wait_college_audit)尚无学院审核记录
 INSERT IGNORE INTO `project_college_audit` (`project_id`, `admin_id`, `result`) VALUES
 (1, 2, 'pass'), (2, 2, 'pass'), (3, 3, 'pass'),
 (4, 2, 'pass'), (5, 2, 'pass'), (6, 3, 'pass'), (7, 4, 'pass'), (8, 6, 'pass'),
@@ -174,8 +184,6 @@ INSERT IGNORE INTO `project_college_audit` (`project_id`, `admin_id`, `result`) 
 (21, 2, 'pass');
 
 -- ==================== 学校终审数据 ====================
--- 仅项目已到达 approved 及以上阶段，或被校级驳回
--- 项目14(wait_school_review)尚无学校审核记录
 INSERT IGNORE INTO `project_school_audit` (`project_id`, `admin_id`, `result`) VALUES
 (1, 1, 'pass'), (2, 1, 'pass'), (3, 1, 'pass'),
 (4, 1, 'pass'), (5, 1, 'pass'), (6, 1, 'pass'), (7, 1, 'pass'), (8, 1, 'pass'),
@@ -185,8 +193,6 @@ INSERT IGNORE INTO `project_school_audit` (`project_id`, `admin_id`, `result`) V
 (21, 1, 'pass');
 
 -- ==================== 专家分配数据 ====================
--- college阶段: 项目到达 wait_college_audit 及以上
--- school阶段: 项目到达 wait_school_review 及以上
 INSERT IGNORE INTO `expert_assignment` (`project_id`, `expert_id`, `stage`) VALUES
 -- 院级评审 (2024年运行中项目)
 (4, 4, 'college'), (4, 5, 'college'),
@@ -205,7 +211,7 @@ INSERT IGNORE INTO `expert_assignment` (`project_id`, `expert_id`, `stage`) VALU
 (14, 4, 'college'), (14, 5, 'college'),
 (15, 5, 'college'), (15, 10, 'college'),
 (17, 6, 'college'), (17, 7, 'college'),
--- 院级评审 (被驳回项目19: 走到过学院审核)
+-- 院级评审 (被驳回项目19)
 (19, 5, 'college'), (19, 10, 'college'),
 -- 院级评审 (结题申请项目21)
 (21, 4, 'college'), (21, 5, 'college'),
@@ -227,9 +233,9 @@ INSERT IGNORE INTO `expert_assignment` (`project_id`, `expert_id`, `stage`) VALU
 (11, 1, 'school'), (11, 4, 'school'), (11, 5, 'school'),
 (12, 3, 'school'), (12, 7, 'school'),
 (13, 2, 'school'), (13, 6, 'school'),
--- 校级评审 (审核中项目14: wait_school_review已分配专家但未评分)
+-- 校级评审 (审核中项目14)
 (14, 1, 'school'), (14, 3, 'school'),
--- 校级评审 (被驳回项目19: 走到过校级审核)
+-- 校级评审 (被驳回项目19)
 (19, 1, 'school'), (19, 3, 'school'),
 -- 校级评审 (结题申请项目21)
 (21, 1, 'school'), (21, 2, 'school'),
@@ -239,106 +245,98 @@ INSERT IGNORE INTO `expert_assignment` (`project_id`, `expert_id`, `stage`) VALU
 (3, 3, 'school'), (3, 8, 'school');
 
 -- ==================== 评审打分数据 ====================
--- 仅已完成的评审打分（项目15/17/14尚在审核中，无或只有部分评分）
 INSERT IGNORE INTO `project_review_score` (`project_id`, `expert_id`, `review_stage`, `score_innovation`, `score_feasibility`, `score_team`, `score_value`, `total_score`) VALUES
--- 项目1: 基于深度学习的图像识别系统 (院级)
+-- 项目1 (院级)
 (1, 4, 'college', 23, 22, 20, 21, 86),
 (1, 5, 'college', 24, 21, 22, 20, 87),
--- 项目1 校级
+-- 项目1 (校级)
 (1, 1, 'school', 25, 24, 22, 23, 94),
 (1, 2, 'school', 24, 23, 21, 22, 90),
--- 项目2: 智能校园导航APP开发 (院级)
+-- 项目2 (院级)
 (2, 5, 'college', 22, 21, 19, 20, 82),
 (2, 6, 'college', 23, 22, 20, 21, 86),
--- 项目2 校级
+-- 项目2 (校级)
 (2, 2, 'school', 23, 22, 21, 20, 86),
 (2, 3, 'school', 22, 23, 20, 21, 86),
--- 项目3: 物联网环境监测节点设计 (院级)
+-- 项目3 (院级)
 (3, 6, 'college', 21, 23, 20, 22, 86),
 (3, 7, 'college', 22, 22, 21, 20, 85),
--- 项目3 校级
+-- 项目3 (校级)
 (3, 3, 'school', 24, 23, 22, 21, 90),
 (3, 8, 'school', 23, 22, 21, 20, 86),
-
--- 项目4: 基于大模型的智能问答助手 (院级)
+-- 项目4 (院级)
 (4, 4, 'college', 23, 22, 20, 21, 86),
 (4, 5, 'college', 24, 21, 22, 20, 87),
--- 项目4 校级
+-- 项目4 (校级)
 (4, 1, 'school', 25, 24, 22, 23, 94),
 (4, 2, 'school', 24, 23, 21, 22, 90),
--- 项目5: 区块链存证平台设计 (院级)
+-- 项目5 (院级)
 (5, 5, 'college', 20, 21, 19, 18, 78),
 (5, 6, 'college', 21, 22, 20, 19, 82),
--- 项目5 校级
+-- 项目5 (校级)
 (5, 2, 'school', 22, 23, 21, 20, 86),
 (5, 3, 'school', 23, 22, 20, 21, 86),
--- 项目6: 5G边缘计算 (院级)
+-- 项目6 (院级)
 (6, 6, 'college', 22, 24, 21, 23, 90),
 (6, 7, 'college', 21, 23, 20, 22, 86),
--- 项目6 校级
+-- 项目6 (校级)
 (6, 3, 'school', 24, 25, 22, 23, 94),
 (6, 8, 'school', 23, 24, 21, 22, 90),
--- 项目7: 智能制造 (院级)
+-- 项目7 (院级)
 (7, 7, 'college', 21, 23, 22, 20, 86),
 (7, 4, 'college', 22, 22, 21, 21, 86),
--- 项目7 校级
+-- 项目7 (校级)
 (7, 8, 'school', 23, 24, 22, 21, 90),
 (7, 1, 'school', 24, 23, 23, 22, 92),
--- 项目8: 二手交易平台 (院级)
+-- 项目8 (院级)
 (8, 5, 'college', 18, 20, 19, 21, 78),
 (8, 10, 'college', 19, 21, 20, 22, 82),
--- 项目8 校级
+-- 项目8 (校级)
 (8, 9, 'school', 20, 22, 21, 23, 86),
 (8, 2, 'school', 21, 23, 20, 22, 86),
-
--- 项目9: 联邦学习 (院级)
+-- 项目9 (院级)
 (9, 4, 'college', 22, 23, 21, 20, 86),
 (9, 5, 'college', 23, 22, 20, 21, 86),
--- 项目9 校级
+-- 项目9 (校级)
 (9, 1, 'school', 24, 23, 22, 21, 90),
 (9, 3, 'school', 23, 24, 21, 22, 90),
--- 项目10: AI辅助医学影像 (院级)
+-- 项目10 (院级)
 (10, 6, 'college', 22, 24, 21, 20, 87),
 (10, 7, 'college', 21, 23, 20, 22, 86),
--- 项目10 校级
+-- 项目10 (校级)
 (10, 2, 'school', 23, 24, 22, 21, 90),
 (10, 8, 'school', 22, 23, 21, 20, 86),
-
--- 项目11: 多模态内容审核 (院级)
+-- 项目11 (院级)
 (11, 4, 'college', 24, 23, 22, 21, 90),
 (11, 5, 'college', 23, 22, 21, 22, 88),
--- 项目11 校级
+-- 项目11 (校级)
 (11, 1, 'school', 25, 24, 23, 24, 96),
 (11, 4, 'school', 24, 23, 22, 23, 92),
 (11, 5, 'school', 23, 22, 21, 22, 88),
--- 项目12: 机器人巡检 (院级)
+-- 项目12 (院级)
 (12, 7, 'college', 21, 23, 22, 20, 86),
 (12, 4, 'college', 22, 22, 21, 21, 86),
--- 项目12 校级
+-- 项目12 (校级)
 (12, 3, 'school', 22, 24, 21, 20, 87),
 (12, 7, 'school', 23, 23, 22, 21, 89),
--- 项目13: 绿色能源 (院级)
+-- 项目13 (院级)
 (13, 6, 'college', 20, 22, 21, 19, 82),
 (13, 7, 'college', 21, 23, 20, 22, 86),
--- 项目13 校级
+-- 项目13 (校级)
 (13, 2, 'school', 21, 23, 20, 22, 86),
 (13, 6, 'school', 22, 22, 21, 23, 88),
-
--- 项目14: RAG法律咨询 (院级, 已完成; 校级尚未评分)
+-- 项目14 (院级已完成; 校级尚未评分)
 (14, 4, 'college', 22, 23, 21, 20, 86),
 (14, 5, 'college', 23, 22, 20, 21, 86),
-
--- 项目17: 量子通信 (院级, 已完成; 尚在 wait_college_audit)
+-- 项目17 (院级已完成; 尚在 wait_college_audit)
 (17, 6, 'college', 21, 23, 20, 22, 86),
 (17, 7, 'college', 22, 22, 21, 21, 86),
-
--- 项目19: 校园外卖 (院级+校级, 被校级驳回)
+-- 项目19 (被校级驳回)
 (19, 5, 'college', 18, 19, 17, 16, 70),
 (19, 10, 'college', 19, 20, 18, 17, 74),
 (19, 1, 'school', 15, 16, 14, 13, 58),
 (19, 3, 'school', 16, 17, 15, 14, 62),
-
--- 项目21: 智能停车管理 (院级+校级)
+-- 项目21 (院级+校级)
 (21, 4, 'college', 22, 24, 21, 23, 90),
 (21, 5, 'college', 23, 23, 22, 22, 90),
 (21, 1, 'school', 24, 25, 23, 22, 94),
@@ -387,6 +385,13 @@ INSERT IGNORE INTO `project_mid_check` (`project_id`, `submit_time`, `status`) V
 (7, '2024-09-15 10:00:00', 'pass'),
 (21, '2024-09-20 14:00:00', 'pass');
 
+-- ==================== 结题验收数据 ====================
+INSERT IGNORE INTO `project_conclude` (`project_id`, `submit_time`, `status`) VALUES
+(1, '2024-02-15 10:00:00', 'pass'),
+(2, '2024-03-01 14:30:00', 'pass'),
+(3, '2024-04-10 09:00:00', 'pass'),
+(21, '2025-02-20 16:00:00', 'waiting');
+
 -- ==================== 成果数据 ====================
 INSERT IGNORE INTO `project_achievement` (`project_id`, `type`, `name`, `achievement_no`, `publish_time`, `status`) VALUES
 -- 项目1成果 (已结题)
@@ -411,15 +416,7 @@ INSERT IGNORE INTO `project_achievement` (`project_id`, `type`, `name`, `achieve
 -- 项目11成果 (已批准/即将启动)
 (11, 'paper', '多模态内容审核技术综述', NULL, NULL, 'applying');
 
--- ==================== 结题验收数据 ====================
-INSERT IGNORE INTO `project_conclude` (`project_id`, `submit_time`, `status`) VALUES
-(1, '2024-02-15 10:00:00', 'pass'),
-(2, '2024-03-01 14:30:00', 'pass'),
-(3, '2024-04-10 09:00:00', 'pass'),
-(21, '2025-02-20 16:00:00', 'waiting');
-
 -- ==================== 附件元数据 ====================
--- upload_user 均为项目 leader(student), relation_id 为 project_id 或 achievement_id
 INSERT IGNORE INTO `attachment` (`attach_type`, `relation_id`, `file_name`, `file_size`, `minio_path`, `upload_user`) VALUES
 ('apply', 4, '基于大模型的智能问答助手-申报书.pdf', 2048576, 'apply/4/申报书.pdf', 14),
 ('apply', 4, '项目预算明细.xlsx', 512000, 'apply/4/预算明细.xlsx', 14),
@@ -436,7 +433,6 @@ INSERT IGNORE INTO `attachment` (`attach_type`, `relation_id`, `file_name`, `fil
 ('conclude', 3, '结题报告.pdf', 1792000, 'conclude/3/结题报告.pdf', 16);
 
 -- ==================== 消息中心数据 ====================
--- receiver_id/sender_id 均为有效 user_id
 INSERT IGNORE INTO `message` (`receiver_id`, `sender_id`, `title`, `content`, `type`, `relation_id`, `is_read`, `create_time`) VALUES
 (7, 1, '新项目待审核', '项目「基于大模型的智能问答助手」已提交，请尽快审核。', 'audit', 4, 1, '2024-03-01 10:00:00'),
 (8, 1, '新项目待审核', '项目「区块链存证平台设计」已提交，请尽快审核。', 'audit', 5, 1, '2024-03-15 10:00:00'),

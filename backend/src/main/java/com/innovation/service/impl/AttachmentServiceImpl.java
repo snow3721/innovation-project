@@ -15,10 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class AttachmentServiceImpl extends ServiceImpl<AttachmentMapper, Attachment> implements AttachmentService {
+
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(".pdf", ".doc", ".docx");
 
     @Autowired
     private MinioClient minioClient;
@@ -32,10 +37,20 @@ public class AttachmentServiceImpl extends ServiceImpl<AttachmentMapper, Attachm
     @Override
     public Attachment uploadFile(MultipartFile file, String type, Integer relationId, Integer userId) {
         try {
+            // 文件格式校验
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    ? originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase()
                     : "";
+            if (!ALLOWED_EXTENSIONS.contains(extension)) {
+                throw new RuntimeException("不支持的文件格式，仅支持 PDF/Word 文档（.pdf/.doc/.docx）");
+            }
+
+            // 文件大小校验
+            if (file.getSize() > MAX_FILE_SIZE) {
+                throw new RuntimeException("文件大小超过限制，最大允许 10MB");
+            }
+
             String fileName = UUID.randomUUID().toString() + extension;
             String minioPath = type + "/" + relationId + "/" + fileName;
 
