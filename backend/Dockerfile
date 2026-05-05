@@ -1,12 +1,12 @@
 # 多阶段构建：Maven 编译 + JRE 运行
-FROM maven:3.8-openjdk-11 AS builder
+FROM maven:3.8-eclipse-temurin-11 AS builder
 WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn package -DskipTests -B
 
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre
 WORKDIR /app
 
 # 时区设置
