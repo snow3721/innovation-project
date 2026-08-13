@@ -6,6 +6,9 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import path from 'path'
 
 export default defineConfig({
+  define: {
+    global: 'globalThis',
+  },
   plugins: [
     vue(),
     AutoImport({
@@ -29,6 +32,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
+      },
+      '/ws': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

@@ -239,4 +239,22 @@ CREATE TABLE IF NOT EXISTS `message` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心表';
 
+-- ==================== 聊天会话表 ====================
+
+CREATE TABLE IF NOT EXISTS `conversation` (
+  `conversation_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '会话ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天会话表';
+
+CREATE TABLE IF NOT EXISTS `conversation_participant` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '参与者记录ID',
+  `conversation_id` BIGINT NOT NULL COMMENT '会话ID',
+  `user_id` INT NOT NULL COMMENT '用户ID',
+  `unread_count` INT DEFAULT 0 COMMENT '未读消息数',
+  `deleted` TINYINT DEFAULT 0 COMMENT '是否已删除: 0未删除 1已删除',
+  UNIQUE KEY `idx_conv_user` (`conversation_id`, `user_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天会话参与者表';
+
 SET FOREIGN_KEY_CHECKS = 1;

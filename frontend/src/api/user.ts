@@ -28,6 +28,10 @@ export function getTeachers(params?: { collegeId?: number; realName?: string }) 
   return request.get('/users/teachers', { params })
 }
 
+export function searchUsers(keyword?: string) {
+  return request.get('/users/search', { params: { keyword } })
+}
+
 export function changePassword(data: { oldPassword: string; newPassword: string }) {
   return request.put('/users/change-password', data)
 }

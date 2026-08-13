@@ -51,4 +51,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         wrapper.orderByAsc(User::getRealName);
         return list(wrapper);
     }
+
+    @Override
+    public List<User> searchUsers(String keyword) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getStatus, 1);
+        if (StringUtils.hasText(keyword)) {
+            wrapper.and(w -> w.like(User::getRealName, keyword).or().like(User::getUsername, keyword));
+        }
+        wrapper.select(User::getUserId, User::getRealName, User::getUsername, User::getRole, User::getCollegeId);
+        wrapper.orderByAsc(User::getRealName);
+        wrapper.last("LIMIT 50");
+        return list(wrapper);
+    }
 }

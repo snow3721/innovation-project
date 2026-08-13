@@ -44,6 +44,12 @@ public class UserController {
         return Result.success(userService.listTeachers(collegeId, realName));
     }
 
+    @ApiOperation("搜索用户（聊天选择）")
+    @GetMapping("/search")
+    public Result<List<User>> searchUsers(@RequestParam(required = false) String keyword) {
+        return Result.success(userService.searchUsers(keyword));
+    }
+
     @ApiOperation("获取当前用户信息")
     @GetMapping("/me")
     public Result<Map<String, Object>> getCurrentUser() {

@@ -67,6 +67,13 @@
             <el-badge v-if="unreadCount > 0" :value="unreadCount" :max="99" style="margin-left: 6px" />
           </template>
         </el-menu-item>
+        <el-menu-item index="/chat">
+          <el-icon><ChatDotRound /></el-icon>
+          <template #title>
+            站内信
+            <el-badge v-if="chatUnread > 0" :value="chatUnread" :max="99" style="margin-left: 6px" />
+          </template>
+        </el-menu-item>
 
         <el-menu-item v-if="hasRole(['school_admin','college_admin'])" index="/users">
           <el-icon><User /></el-icon>
@@ -135,9 +142,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getUnreadCount } from '@/api/message'
+import { getConversations } from '@/api/chat'
+import { useChatStore } from '@/stores/chat'
 import {
   Odometer, Folder, Edit, Flag, Trophy, User, Avatar,
-  School, Menu, DataAnalysis, Bell
+  School, Menu, DataAnalysis, Bell, ChatDotRound
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -145,6 +154,8 @@ const router = useRouter()
 const userStore = useUserStore()
 const isCollapse = ref(false)
 const unreadCount = ref(0)
+const chatStore = useChatStore()
+const chatUnread = computed(() => chatStore.totalUnread)
 let timer: any = null
 
 async function fetchUnreadCount() {
@@ -154,9 +165,20 @@ async function fetchUnreadCount() {
   } catch {}
 }
 
+async function fetchChatConversations() {
+  try {
+    const res: any = await getConversations()
+    chatStore.setConversations(res.data || [])
+  } catch {}
+}
+
 onMounted(() => {
   fetchUnreadCount()
-  timer = setInterval(fetchUnreadCount, 30000)
+  fetchChatConversations()
+  timer = setInterval(() => {
+    fetchUnreadCount()
+    fetchChatConversations()
+  }, 30000)
 })
 
 onUnmounted(() => {

@@ -13,4 +13,6 @@ public interface UserService extends IService<User> {
     IPage<User> listUsers(int page, int size, String role, Integer collegeId, String realName);
 
     List<User> listTeachers(Integer collegeId, String realName);
+
+    List<User> searchUsers(String keyword);
 }

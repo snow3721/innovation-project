@@ -30,6 +30,7 @@ const routes = [
       { path: 'achievements', name: 'Achievements', component: () => import('@/views/achievement/AchievementList.vue'), meta: { title: '成果管理' } },
       { path: 'achievements/create', name: 'AchievementCreate', component: () => import('@/views/achievement/AchievementCreate.vue'), meta: { title: '提交成果' } },
       { path: 'messages', name: 'Messages', component: () => import('@/views/message/MessageList.vue'), meta: { title: '消息中心' } },
+      { path: 'chat', name: 'Chat', component: () => import('@/views/chat/ChatLayout.vue'), meta: { title: '站内信' } },
       { path: 'users', name: 'Users', component: () => import('@/views/user/UserList.vue'), meta: { title: '用户管理', roles: ['school_admin', 'college_admin'] } },
       { path: 'experts', name: 'Experts', component: () => import('@/views/expert/ExpertList.vue'), meta: { title: '专家管理', roles: ['school_admin', 'college_admin'] } },
       { path: 'colleges', name: 'Colleges', component: () => import('@/views/college/CollegeList.vue'), meta: { title: '学院管理', roles: ['school_admin'] } },
